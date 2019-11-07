@@ -1,0 +1,19 @@
+webserver:
+  security:
+    anti-forgery: false
+    ssl-redirect: false
+
+just-auth:
+  email-config: "test-resources/email-conf.yaml"
+  mongo-config:
+    host: localhost
+    port: 27017
+    db: test-social-wallet
+  throttling:
+    criteria: !!set {!keyword email: null, !keyword ip-address: null}
+    type: !keyword block
+    time-window-secs: 3600
+    threshold: 1000
+
+noapikey-swapi:
+  base-url: "http://localhost:3000/wallet/v1"
