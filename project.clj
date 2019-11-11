@@ -40,6 +40,9 @@
                  [mount "0.1.16"]
                  [tolitius/mount-up "0.1.2" :exclusions [org.clojure/tools.logging]]
 
+                 ;; date/time
+                 [clj-time "0.15.2"]
+                 
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
                  ;; storage lib

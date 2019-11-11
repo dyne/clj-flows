@@ -15,36 +15,44 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns valueflows.test.core
+(ns valueflows.test.scenarios.track-and-trace
   (:require [midje.sweet :refer [against-background before after facts fact =>]]
 
+            [valueflows
+             [stores :refer [stores]]]
+            [valueflows.db
+             [mutations :as mut]
+             [queries :as q]]
+
+            [clj-storage.core :as storage :refer [Store]]
+            [clj-time.core :as time]
+            monger.joda-time
+            
+            [mount.core :as mount]
             [taoensso.timbre :as log]
-            )
-  #_(:import [org.jsoup Jsoup]
-           [org.jsoup.nodes Document]
-           [org.jsoup Connection$Method Connection$Response]))
+            ))
 
-#_(defn parse-body [body]
-  (cheshire/parse-string (slurp body) true))
+(def actors #{:waste-management :retail-shop :textile-lab :fashion-store})
+(def units #{:kilo :each :hour})
 
-#_(against-background [(before :contents (mount/start-with-args {:port 3001
-                                                               :link-port 3001
-                                                               :stub-email true
-                                                               :with-apikey false
-                                                               :config "test-resources/config.yaml"}))
-                     (after :contents (mount/stop))]
+(against-background [(before :contents (mount/start-with-args {:port 8888}))
+                     (after :contents (do
+                                        (storage/empty-db-stores! stores)
+                                        (mount/stop)))]
 
-                    (facts "Check that the app state is loaded properly"
-                           (fact "check that the email throtling config is properly read"
-                                 (-> c/config :just-auth :throttling)
-                                 => {:criteria #{:email, :ip-address}
-                                     :type :block
-                                     :time-window-secs 3600
-                                     :threshold 1000}))
-                    (facts "Some basic requests work properly"
-                           (fact "Home page requests succeeds and returns correct text"
-                                 (let [response (.get (Jsoup/connect "http://localhost:3001/"))]
-                                   (-> response
-                                       (.select "body")
-                                       (.select "div.card-login")
-                                       (.text)) => "Login"))))
+                    (facts "Textile lab scenario"
+                           (fact "Several actors produce textile output"
+                                 (mut/create-economic-event
+                                  {:id 1
+                                   :provider :not-relevant 
+                                   :receiver :waste-management
+                                   :has-point-in-time (time/now)
+                                   :action :produce
+                                   :resource-quantity-numeric-value 200
+                                   :resource-quantity-unit :kilo
+                                   :resource-inventory-as "Lot 173 textile material"
+                                   :resource-conforms-to [:red :cotton]})
+                                 (-> (q/query-economic-event
+                                      {:receiver "waste-management"})
+                                     first
+                                     :resource-inventory-as) => "Lot 173 textile material")))

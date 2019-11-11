@@ -23,7 +23,9 @@
             ;; Mount needs to require the ns in order to start them
             #_[social-wallet.translation]
             #_[social-wallet.authenticator]
-            [valueflows.server]))
+            [valueflows.server]
+            [valueflows.db]
+            [valueflows.stores]))
 
 (defn parse-args [args]
   (let [opts [["-p" "--port [webapp port]" "Web app port"

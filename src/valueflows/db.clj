@@ -27,12 +27,12 @@
 
 ;; TODO hardcoded
 (defn conf->mongo-uri [mongo-conf]
-  (str "mongodb://localhost:27017"))
+  (str "mongodb://localhost:27017/valueflows"))
   
 (defn connect-db []
   (log/info "Connecting db...")
   (f/attempt-all [uri (conf->mongo-uri nil)
-                  db (mongo/get-mongo-db-and-conn uri)]
+                  db (mongo/get-mongo-db-and-conn (log/spy uri))]
                  db
                  (f/if-failed [e]
                               (log/error (str "Could not connect to db: " (f/message e))))))

@@ -18,32 +18,16 @@
 (ns valueflows.db.queries
   (:require [taoensso.timbre :as log]
 
-            [mount.core :refer [defstate]]))
+            [valueflows.stores :refer [stores]]
+            [clj-storage.core :as store]
+   ))
 
 (defn query [])
 
+;; TODO: only supports exact queries for now, need to add functions like before
 (defn query-economic-event
-  [id]
-  #_(let [event (jdbc/execute-one! db
-                                 ["select * from EconomicEvent where id = ?" id]
-                                 {:builder-fn opt/as-unqualified-maps})
-        effortQuantityUnit (query :Unit (:resourceQuantityUnit event))
-        action (query :Action (:action event))
-        provider (query :Agent (:provider event))
-        receiver (query :Agent (:receiver event))
-        resourceInventoriedAs (query :EconomicResource (:resourceInventoriedAs event))
-        resourceConformsTo  (query :ResourceSpecification (:resourceConformsTo event))
-        inputOf (query :Process (:inputOf event))
-        outputOf (query :Process (:outputOf event))]
-    (-> event
-        (merge {:inputOf inputOf})
-        (merge {:outputOf outputOf})
-        (merge {:effortQuantityUnit effortQuantityUnit})
-        (merge {:action action})
-        (merge {:provider provider})
-        (merge {:receiver receiver})
-        (merge {:resourceConformsTo resourceConformsTo})
-        (merge {:resourceInventoriedAs resourceInventoriedAs}))))
+  [{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
+  (store/query (:transaction-store stores) param-map))
 
 
 (defn query-all-economic-event 
