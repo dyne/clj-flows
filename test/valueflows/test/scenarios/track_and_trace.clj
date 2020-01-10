@@ -32,162 +32,148 @@
             [taoensso.timbre :as log]
             ))
 
-(def actors #{:waste-management :retail-shop :textile-lab :fashion-store})
+(def actors #{:waste-management :retail-shop :textile-lab})
 (def units #{:kilo :each :hour})
 
 (against-background [(before :contents (mount/start-with-args {:port 8888}))
                      (after :contents (do
                                         (storage/empty-db-stores! stores)
                                         (mount/stop)))]
+
+                ; WIP
+                ; * if an economic event fulfills an intent, needs to be created a satisfaction to record that the intent is fulfilled, but not required for this demo
+                ; * We'll not include commitments in this first scenario, we may want to track commitment later
+                ; * If an intent involves an exchange , it will require a more complext intent structure, we'll need a proposal that involve 2 intents connected each other
                     
-                    (facts "Textile lab scenario"
+                    (facts "Intents & simple process scenario"
+                    ; Current scenario will allow to:
+                        ; - define and satisfy intents
+                        ; - Create economic events that affect resources
+                        ; - Create Process to group a bunch of economic events related each other
+                    ; Some implementations of the scenario are:
+                        ; - Show where resources are located on a map
+                        ; - Track all the resource flow
+                        ; - Broadcast available resources on the network
+                        ; - Transfer resources   
                            (fact "An unknown agent transfer some textile material to Waste Management"
                                  (mut/create-economic-event {:id 1
-                                                             :provider :not-relevant
                                                              :receiver :waste-management
                                                              :has-point-in-time (time/now)
                                                              :action :transfer
-                                                             :resource-quantity-numeric-value 200
-                                                             :resource-quantity-unit :kilo
-                                                             :resource-inventory-as "Lot 173 textile material"
-                                                             :resource-conforms-to [:red :cotton]})
+                                                             :resource-quantity-has-numerical-value 200
+                                                             :resource-quantity-has-unit :kilo
+                                                             :to-resource-inventoried-as "Lot 173 textile material"
+                                                             :resource-conforms-to :textile-material
+                                                             :current-location "52.372807,4.8981023"
+                                                             :resource-classified-as [:red :cotton]})
+                                 (-> (q/query-resource {:name "Lot 173 textile material"})
+                                     :resource-quantity-has-numerical-value) => 200
+                                 (-> (q/query-resource {:name "Lot 173 textile material"})
+                                     :current-location) => "52.372807,4.8981023"
                                  (-> (q/query-economic-event {:receiver "waste-management"})
                                      first
-                                     :resource-inventory-as) => "Lot 173 textile material")
-                           (fact "WasteManagement broadcasts an offer to transfer Lot173"
+                                     :to-resource-inventoried-as) => "Lot 173 textile material")
+
+                           (fact "Waste Management broadcasts an offer to transfer Lot 173 textile material"
                                  (mut/create-intent {:id 2
                                                      :provider :waste-management
                                                      :action :transfer
-                                                     :resource-quantity-numeric-value 200
-                                                     :resource-quantity-unit :kilo
-                                                     :resource-inventory-as "Lot 173 textile material"
-                                                     :has-point-in-time (time/now)})
+                                                     :available-quantity-has-numerical-value 200
+                                                     :available-quantity-has-unit :kilo
+                                                     :resource-conforms-to :textile-material
+                                                     :resource-classified-as [:red :cotton]
+                                                     :at-location "52.372807,4.8981023"
+                                                     :description "Available to transfer a lot of red cotton textile material in good condition"})
                                  (-> (q/query-intent {:provider "waste-management"})
                                      first
-                                     :resource-inventory-as) => "Lot 173 textile material")
-                           (fact "TextileLab commits to receive the Lot 173 from Waste Management"
-                                 (mut/create-commitment
-                                  {:id 3
-                                   :provider :waste-management
-                                   :action :transfer
-                                   :resource-quantity-numeric-value 200
-                                   :resource-quantity-unit :kilo
-                                   :resource-inventory-as "Lot 173 textile material"
-                                   :has-point-in-time (time/now)
-                                   :receiver :textile-lab})
-                                 (-> (q/query-commitment {:provider "waste-management"})
-                                     first
-                                     :receiver) => "textile-lab")
-                           (fact "WasteManagement transfers Lot 173 to TextileLab"
+                                     :to-resource-inventoried-as) => "Lot 173 textile material")
+
+                           (fact "Waste Management transfers part of Lot 173 to Textile Lab"
                                  (mut/create-economic-event {:id 4
                                                              :provider :waste-management
                                                              :receiver :textile-lab
                                                              :has-point-in-time (time/now)
                                                              :action :transfer
-                                                             :resource-quantity-numeric-value 200
+                                                             :resource-quantity-has-numerical-value 15
+                                                             :satisfies 2
                                                              :resource-quantity-unit :kilo
-                                                             :resource-inventory-as "Lot 173 textile material"
-                                                             :resource-conforms-to [:red :cotton]})
+                                                             :resource-inventoried-as "Lot 173 textile material"
+                                                             :to-resource-inventoried-as "Raw red cotton"
+                                                             :current-location "52.372807,4.8981023" ; <-- put long/lat data here
+                                                             :resource-classified-as [:red :cotton]})
                                  (-> (q/query-economic-event {:receiver "textile-lab"})
                                      first
-                                     :resource-inventory-as) => "Lot 173 textile material")
-                           (fact "TextileLab creates a new process to produce a new pair of jeans"
+                                     :to-resource-inventoried-as) => "Raw red cotton"
+                                 (-> (q/query-resource {:name "Raw red cotton"})
+                                     :resource-quantity-has-numerical-value) => 15
+                                 (-> (q/query-resource {:name "Lot 173 textile material"})
+                                     :resource-quantity-has-numerical-value) => 185)
+
+
+                           (fact "Textile Lab creates a new process to produce a new pair of jeans"
                                  (mut/create-process {:id 4
                                                       :name "Create a new pair of hyper jeans"
                                                       :note "Hyper jeans will be produced using the hyperballad design"
-                                                      :before (time/now)})
+                                                      :before (time/now + 1 week)})
                                  (-> (q/query-process {:id 4})
                                      :name) => "Create a new pair of hyper jeans")
-                           (fact "Worker uses Hyperballad design for the hyper jeans"
+
+                           (fact "A bunch of work is done over the process: citing a design, consuming some materials and manufacturing the jeans, at the end the hyper jeans is produced and put in the inventory"
                                  (mut/create-economic-event {:id 5
                                                              :provider :worker
                                                              :receiver :textile-lab
                                                              :has-point-in-time (time/now)
                                                              :action :cite
                                                              :input-of 4
-                                                             :resource-quantity-numeric-value 1
+                                                             :resource-quantity-has-numerical-value 1
                                                              :resource-quantity-unit :each
-                                                             :resource-inventory-as "hyperballad design"})
-                                 (-> (q/query-economic-event {:action "cite"})
-                                     first
-                                     :resource-inventory-as) => "hyperballad design")
-                           (fact "Worker consumes 10kg from Lot 173 from TextileLab inventory"
+                                                             :resource-inventoried-as "hyperballad design"})
                                  (mut/create-economic-event {:id 6
                                                              :provider :worker
                                                              :receiver :textile-lab
                                                              :has-point-in-time (time/now)
                                                              :action :consume
                                                              :input-of 4
-                                                             :resource-quantity-numeric-value 10
-                                                             :resource-quantity-unit :kilo
-                                                             :resource-inventory-as "Lot 173 textile material"})
-                                 (-> (q/query-economic-event {:action "consume"})
-                                     first
-                                     :resource-inventory-as) => "Lot 173 textile material")
-                           (fact "TextileLab now owns 190kg of Lot 173 in its own inventory"
-                                 (-> (q/query-resource {:resource-inventory-as "Lot 173 textile material"})
-                                     :resource-quantity-numeric-value) => 190)
+                                                             :resource-quantity-has-numerical-value 10
+                                                             :resource-quantity-has-unit :kilo
+                                                             :resource-inventoried-as "Raw red cotton"})
 
-                           (fact "Worker logs 4 hours working on the jeans"
                                  (mut/create-economic-event {:id 7
                                                              :provider :worker
                                                              :receiver :textile-lab
                                                              :has-point-in-time (time/now)
                                                              :action :work
                                                              :input-of 4
-                                                             :resource-quantity-numeric-value 4
-                                                             :resource-quantity-unit :hour
-                                                             :resource-inventory-as "Lot 173 textile material"
-                                                             :note "Done all the work!"
-                                                             :resource-conforms-to [:red :cotton]})
-                                 (-> (q/query-economic-event {:receiver "textile-lab"})
-                                     first
-                                     :resource-inventory-as) => "Lot 173 textile material")
-                           (fact "Worker produces 1 new pair of jeans called Hyper"
+                                                             :effort-quantity-has-numerical-value 4
+                                                             :effort-quantity-has-unit :hour
+                                                             :resource-conforms-to "clothes manufacturing"
+                                                             :note "Done all the work!"})
                                  (mut/create-economic-event {:id 8
-                                                             :provider :worker
+                                                             :provider :textile-lab
                                                              :receiver :textile-lab
                                                              :has-point-in-time (time/now)
                                                              :action :produce
                                                              :output-of 4
-                                                             :resource-quantity-numeric-value 1
-                                                             :resource-quantity-unit :each
-                                                             :resource-inventory-as "hyper jeans"})
-                                 (-> (q/query-economic-event {:id 8})
-                                     :resource-inventory-as) => "hyper jeans")
-                           (fact "TextileLab offers to transfer 1 Hyper jeans"
-                                 (mut/create-intent {:id 9
-                                                     :provider :textile-lab
-                                                     :action :transfer
-                                                     :resource-quantity-numeric-value 1
-                                                     :resource-quantity-unit :each
-                                                     :resource-inventory-as "hyper jeans"
-                                                     :has-point-in-time (time/now)})
-                                 (-> (q/query-intent {:provider "textile-lab"})
-                                     first
-                                     :resource-inventory-as) => "hyper jeans")
-                           (fact "The RetailShop commits to receive the Hyper jeans"
-                                 (mut/create-commitment
-                                  {:id 10
-                                   :provider :textile-lab
-                                   :action :transfer
-                                   :resource-quantity-numeric-value 1
-                                   :resource-quantity-unit :each
-                                   :resource-inventory-as "hyper jeans"
-                                   :has-point-in-time (time/now)
-                                   :receiver :retail-shop})
-                                 (-> (q/query-commitment {:provider "textile-lab"})
-                                     first
-                                     :receiver) => "retail-shop")
-                           (fact "TextileLab transfers the Hyper jeans"
-                                 (mut/create-economic-event {:id 11
-                                                             :provider :textile-lab
-                                                             :receiver :retail-shop
-                                                             :has-point-in-time (time/now)
-                                                             :action :transfer
-                                                             :resource-quantity-numeric-value 1
-                                                             :resource-quantity-unit :each
-                                                             :resource-inventory-as "hyper jeans"})
-                                 (-> (q/query-economic-event {:receiver "retail-shop"})
-                                     first
-                                     :resource-inventory-as) => "hyper jeans")))
+                                                             :current-location "TextileLab place"
+                                                             :resource-classified-as [:red :jeans :cotton :slim-fit]
+                                                             :resource-quantity-has-numerical-value 1
+                                                             :resource-quantity-has-unit :each
+                                                             :resource-inventoried-as "hyper jeans"})
+                                 ; Check if the process stored correctly all the input events
+                                 (-> (q/query-process {:id 4})
+                                     :inputs
+                                     :id) => [5, 6, 7]
+                                 ; Check if the process stored correctly all the output events
+                                 (-> (q/query-process {:id 4})
+                                     :outputs
+                                     :id) => [8]
+                                 ; Check if the hyper jeans resource is produced correctly
+                                 (-> (q/query-resource {:name "hyper jeans"})
+                                     :current-location) => "TextileLab place"
+                                 ; Check all the events related to the hyper jeans
+                                 (-> (q/track-resource {:name "hyper jeans"})
+                                     ; WIP Define how tracking is structured
+                                     )=> ;; WIP
+                                 )
+                                 ; check all the inventories 
+                           )))
