@@ -25,4 +25,4 @@
 (defn create-economic-event
   [{:keys [id note has-point-in-time provider receiver action input-of output-of resource-quantity-numeric-value resource-quantity-unit effort-quantity-value effort-quantity-unit resource-inventory-as resource-conforms-to] :as event-map}]
 
-  (log/spy (storage/store! (:transaction-store stores) :id event-map)))
+  (log/spy (storage/store! (:transaction-store stores) :id (log/spy event-map))))

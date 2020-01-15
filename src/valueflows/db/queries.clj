@@ -29,6 +29,17 @@
   [{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
   (store/query (:transaction-store stores) param-map))
 
+(defn query-resource
+  [{:keys [name]}]
+  "Track how much of a specific resource exists in the network (check :resource-inventoried-as if received and :to-resource-inventoried-as if provided.)"
+  (let [received (store/aggregate (:transaction-store stores) [{"$match" {:to-resource-inventoried-as name}}
+                                                      {"$group" {:_id "$receiver"
+                                                                 :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])
+        provided (store/aggregate (:transaction-store stores) [{"$match" {:resource-inventoried-as name}}
+                                                      {"$group" {:_id "$provider"
+                                                                 :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])]
+    (- (int (:resource-quantity-has-numerical-value (first received)))
+       (int (:resource-quantity-has-numerical-value (first provided))))))
 
 (defn query-all-economic-event 
   []
