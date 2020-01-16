@@ -32,96 +32,19 @@
 (defn query-resource
   [{:keys [name]}]
   "Track how much of a specific resource exists in the network (check :resource-inventoried-as if received and :to-resource-inventoried-as if provided.)"
-  (let [received (store/aggregate (:transaction-store stores) [{"$match" {:to-resource-inventoried-as name}}
+  (let [resource (store/query (:transaction-store stores) {:to-resource-inventoried-as name})
+        received (store/aggregate (:transaction-store stores) [{"$match" {:to-resource-inventoried-as name}}
                                                       {"$group" {:_id "$receiver"
                                                                  :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])
         provided (store/aggregate (:transaction-store stores) [{"$match" {:resource-inventoried-as name}}
                                                       {"$group" {:_id "$provider"
                                                                  :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])]
-    (- (int (:resource-quantity-has-numerical-value (first received)))
-       (int (:resource-quantity-has-numerical-value (first provided))))))
-
-(defn query-all-economic-event 
-  []
-  #_(let [ids (jdbc/execute! db
-                           ["select id from EconomicEvent"]
-                           {:builder-fn opt/as-unqualified-maps})]
-    (map #(query-economic-event (:id %)) ids)))
-
-
-(defn query-economic-resource
-  [id]
-  #_(let [resource (jdbc/execute-one! db
-                                    ["select * from EconomicResource where id = ?" id]
-                                    {:builder-fn opt/as-unqualified-maps})
-        accountingQuantityUnit (query :Unit (:accountingQuantityUnit resource))
-        unitOfEffort (query :Unit (:unitOfEffort resource))
-        conformsTo (query :ResourceSpecification (:conformsTo resource))
-        onHandQuantityUnit (query :Unit (:onHandQuantityUnit resource))
-        owner (query :Agent (:owner resource))]
-    (-> resource
-        (merge {:accountingQuantityUnit accountingQuantityUnit})
-        (merge {:unitOfEffort unitOfEffort})
-        (merge {:conformsTo conformsTo})
-        (merge {:onHandQuantityUnit onHandQuantityUnit})
-        (merge {:owner owner}))))
-
-(defn query-all-economic-resource 
-  []
-  #_(let [ids (jdbc/execute! db
-                           ["select id from EconomicResource"]
-                           {:builder-fn opt/as-unqualified-maps})]
-    (map #(query-economic-resource (:id %)) ids)))
-
-
-(defn get-process-inputs
-  [id]
-  #_(let [ids (jdbc/execute! db
-                           ["select id from EconomicEvent where inputOf = ?" id]
-                           {:builder-fn opt/as-unqualified-maps})]
-    (map #(query-economic-event (:id %)) ids)))
-
-(defn get-process-outputs
-  [id]
-  #_(let [ids (jdbc/execute! db
-                           ["select id from EconomicEvent where outputOf = ?" id]
-                           {:builder-fn opt/as-unqualified-maps})]
-    (map #(query-economic-event (:id %)) ids)))
-
-
-(defn get-agent-economic-event
-  [id]
-  #_(let [ids (jdbc/execute! db
-                           ["select id from EconomicEvent where provider = ?" id]
-                           {:builder-fn opt/as-unqualified-maps})]
-    (map #(query-economic-event (:id %)) ids)))
-
-(defn get-agent-inventoriedEconomicResource
-  [id]
-  #_(let [ids (jdbc/execute! db
-                           ["select id from EconomicResource where owner = ?" id]
-                           {:builder-fn opt/as-unqualified-maps})]
-    (map #(query :EconomicResource (:id %)) ids)))
-
-
-                                        ; ; MUTATIONS TODO
-                                        ; (defn create-economic-event
-                                        ;   [event]
-                                        ;   (insert! db
-                                        ;                 :EconomicEvent
-                                        ;                 {:action (:action event)
-                                        ;                  :resourceQuantityNumericValue (:resourceQuantityNumericValue event) 
-                                        ;                  :resourceQuantityUnit (:resourceQuantityUnit event)
-                                        ;                  :effortQuantityNumericValue (:effortQuantityNumericValue event)
-                                        ;                  :effortQuantityUnit (:effortQuantityUnit event) 
-                                        ;                  :hasPointInTime (:hasPointInTime event)
-                                        ;                  :note (:note event)
-                                        ;                  :provider (:provider event)
-                                        ;                  :receiver (:receiver event)
-                                        ;                  :resourceInventoriedAs (:resourceInventoriedAs event)
-                                        ;                  :resourceConformsTo (:resourceConformsTo event)
-                                        ;                  :inputOf (:inputOf event)
-                                        ;                  :outputOf (:outputOf event)
-                                        ;                  :toResourceInventoriedAs (:toResourceInventoriedAs event)}))
-
-
+    {:resource-quantity-has-numerical-value (- (int (:resource-quantity-has-numerical-value (first received)))
+                                               (int (:resource-quantity-has-numerical-value (first provided))))
+     :name name
+     :current-location (-> resource
+                           last
+                           :current-location)
+     }
+    
+    ))

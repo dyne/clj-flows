@@ -46,7 +46,7 @@
                 ; * If an intent involves an exchange , it will require a more complext intent structure, we'll need a proposal that involve 2 intents connected each other
                     
                     (facts "Intents & simple process scenario"
-                    ; Current scenario will allow to:
+                                        ; Current scenario will allow to:
                         ; - define and satisfy intents
                         ; - Create economic events that affect resources
                         ; - Create Process to group a bunch of economic events related each other
@@ -88,12 +88,12 @@
                                                              :resource-conforms-to :textile-material
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
-                                 
-                                 (q/query-resource {:name "Lot 173 textile material"}) => 300)))
-
-                                 (comment (-> (q/query-resource {:name "Lot 173 textile material"})
-                                              first
-                                              :current-location) => "52.372807,4.8981023"
-                                          (-> (q/query-economic-event {:receiver "waste-management"})
-                                              first
-                                              :to-resource-inventoried-as) =>  "Lot 173 textile material")
+                                 (-> (q/query-resource {:name "Lot 173 textile material"})
+                                     :resource-quantity-has-numerical-value
+                                     ) => 300))
+                    (-> (q/query-resource {:name "Lot 173 textile material"})
+                        :current-location) => "52.372807,4.8981023"
+                    (-> (q/query-economic-event {:receiver "waste-management"})
+                        first
+                        :to-resource-inventoried-as) =>  "Lot 173 textile material"
+                    )
