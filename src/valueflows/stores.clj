@@ -22,7 +22,10 @@
             [mount.core :refer [defstate]]))
 
 (defn stores-params-m [args]
-  {"transaction-store" {}})
+  {"transaction-store" {}
+   "intent-store" {}
+   "process-store" {}
+   })
 
 (defn create-valueflows-stores [db & args]
   (log/debug "Creating the valueflows mongo stores")

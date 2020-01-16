@@ -1,5 +1,3 @@
-;; TODO
-
 ;; Copyright (C) 2019- Dyne.org foundation
 
 ;; Sourcecode designed, written and maintained by

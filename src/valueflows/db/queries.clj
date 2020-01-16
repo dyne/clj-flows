@@ -39,12 +39,43 @@
         provided (store/aggregate (:transaction-store stores) [{"$match" {:resource-inventoried-as name}}
                                                       {"$group" {:_id "$provider"
                                                                  :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])]
-    {:resource-quantity-has-numerical-value (- (int (:resource-quantity-has-numerical-value (first received)))
-                                               (int (:resource-quantity-has-numerical-value (first provided))))
+
+
+    (log/spy (if (nil? (first received))
+               0
+               (int (:resource-quantity-has-numerical-value (first received)))
+               ))
+    (log/spy (if (nil? (first provided))
+               0
+               (int (:resource-quantity-has-numerical-value (first received)))
+               ))
+    {:resource-quantity-has-numerical-value (- (if (nil? (first received))
+                                                 0
+                                                 (int (:resource-quantity-has-numerical-value (first received)))
+                                                 )
+                                               (if (nil? (first provided))
+                                                 0
+                                                 (int (:resource-quantity-has-numerical-value (first provided)))
+                                                 ))
      :name name
      :current-location (-> resource
                            last
                            :current-location)
-     }
-    
-    ))
+     }))
+
+
+(defn query-intent
+  [{:keys [provider]}]
+  "Returns a list of intents, currently searching only by provider"
+  (let [intents (store/query (:intent-store stores) {:provider provider})]
+    intents
+    )
+  )
+
+
+(defn query-process []
+  "Return the list of all processes"
+  (let [processes (store/query (:process-store stores) {})]
+    processes
+    )
+  )

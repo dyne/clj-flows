@@ -44,7 +44,6 @@
                 ; * if an economic event fulfills an intent, needs to be created a satisfaction to record that the intent is fulfilled, but not required for this demo
                 ; * We'll not include commitments in this first scenario, we may want to track commitment later
                 ; * If an intent involves an exchange , it will require a more complext intent structure, we'll need a proposal that involve 2 intents connected each other
-                    
                     (facts "Intents & simple process scenario"
                                         ; Current scenario will allow to:
                         ; - define and satisfy intents
@@ -54,9 +53,9 @@
                         ; - Show where resources are located on a map
                         ; - Track all the resource flow
                         ; - Broadcast available resources on the network
-                        ; - Transfer resources   
+                        ; - Transfer resources
                            (fact "An unknown agent transfer some textile material to Waste Management"
-                                 (mut/create-economic-event {:id 1
+                                 (mut/create-economic-event {
                                                              :receiver :waste-management
                                                              :has-point-in-time (time/now)
                                                              :action :transfer
@@ -90,10 +89,57 @@
                                                              :resource-classified-as [:red :cotton]})
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
                                      :resource-quantity-has-numerical-value
-                                     ) => 300))
-                    (-> (q/query-resource {:name "Lot 173 textile material"})
-                        :current-location) => "52.372807,4.8981023"
-                    (-> (q/query-economic-event {:receiver "waste-management"})
-                        first
-                        :to-resource-inventoried-as) =>  "Lot 173 textile material"
-                    )
+                                     ) => 300
+                                 (-> (q/query-resource {:name "Lot 173 textile material"})
+                                     :current-location) => "52.372807,4.8981023"
+                                 (-> (q/query-economic-event {:receiver "waste-management"})
+                                     first
+                                     :to-resource-inventoried-as) =>  "Lot 173 textile material"
+                                 )
+
+(fact "Waste Management broadcasts an offer to transfer Lot 173 textile material"
+                                 (mut/create-intent {
+                                                     :provider :waste-management
+                                                     :action :transfer
+                                                     :available-quantity-has-numerical-value 200
+                                                     :available-quantity-has-unit :kilo
+                                                     :resource-conforms-to :textile-material
+                                                     :resource-classified-as [:red :cotton]
+                                                     :at-location "52.372807,4.8981023"
+                                                     :description "Available to transfer a lot of red cotton textile material in good condition"})
+                                 (-> (q/query-intent {:provider "waste-management"})
+                                     first
+                                     :resource-conforms-to
+                                     ) => "textile-material")
+
+(fact "Waste Management transfers part of Lot 173 to Textile Lab"
+                                 (mut/create-economic-event {
+                                                             :provider :waste-management
+                                                             :receiver :textile-lab
+                                                             :has-point-in-time (time/now)
+                                                             :action :transfer
+                                                             :resource-quantity-has-numerical-value 15
+                                                             :satisfies 2
+                                                             :resource-quantity-unit :kilo
+                                                             :resource-inventoried-as "Lot 173 textile material"
+                                                             :to-resource-inventoried-as "Raw red cotton"
+                                                             :current-location "52.372807,4.8981023"
+                                                             :resource-classified-as [:red :cotton]})
+                                 (-> (q/query-economic-event {:receiver "textile-lab"})
+                                     last
+                                     :to-resource-inventoried-as) => "Raw red cotton"
+                                 (-> (q/query-resource {:name "Raw red cotton"})
+:resource-quantity-has-numerical-value
+                                     ) => 15
+                                 (-> (q/query-resource {:name "Lot 173 textile material"})
+                                     :resource-quantity-has-numerical-value) => 285)
+(fact "Textile Lab creates a new process to produce a new pair of jeans"
+      (mut/create-process {
+                           :name "Create a new pair of hyper jeans"
+                           :note "Hyper jeans will be produced using the hyperballad design"
+                           :before (time/now)})
+      (-> (q/query-process)
+          last
+          :name
+          ) => "Create a new pair of hyper jeans")
+                           ))

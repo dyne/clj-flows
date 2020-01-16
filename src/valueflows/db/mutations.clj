@@ -23,6 +23,15 @@
 (def actions #{:offer :commit :transfer :use :consume :produce :work :exchange})
 
 (defn create-economic-event
-  [{:keys [id note has-point-in-time provider receiver action input-of output-of resource-quantity-numeric-value resource-quantity-unit effort-quantity-value effort-quantity-unit resource-inventory-as resource-conforms-to] :as event-map}]
+  [{:keys [note has-point-in-time provider receiver action input-of output-of resource-quantity-numeric-value resource-quantity-unit effort-quantity-value effort-quantity-unit resource-inventory-as resource-conforms-to] :as event-map}]
 
-  (log/spy (storage/store! (:transaction-store stores) :id (log/spy event-map))))
+  (log/spy (storage/store! (:transaction-store stores) :id event-map)))
+
+
+(defn create-intent [{:keys [provider action available-quantity-has-numeric-value available-quantity-has-unit resource-conforms-to resource-classified-as at-location description] :as event-map}]
+  (log/spy (storage/store! (:intent-store stores) :id event-map)))
+
+
+(defn create-process [{:keys [name note before] :as event-map}]
+  (storage/store! (:process-store stores) :id event-map)
+  )
