@@ -27,7 +27,6 @@
             [clj-storage.core :as storage :refer [Store]]
             [clj-time.core :as time]
             monger.joda-time
-            
             [mount.core :as mount]
             [taoensso.timbre :as log]
             ))
@@ -65,7 +64,7 @@
                                                              :resource-conforms-to :textile-material
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
-                                 (mut/create-economic-event {:id 2
+                                 (mut/create-economic-event {
                                                              :receiver :waste-management
                                                              :has-point-in-time (time/now)
                                                              :action :transfer
@@ -75,7 +74,7 @@
                                                              :resource-conforms-to :textile-material
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
-                                 (mut/create-economic-event {:id 3
+                                 (mut/create-economic-event {
                                                              :provider :waste-management
                                                              :receiver :textile-lab
                                                              :has-point-in-time (time/now)
@@ -142,4 +141,61 @@
           last
           :name
           ) => "Create a new pair of hyper jeans")
-                           ))
+
+
+;; (fact "A bunch of work is done over the process: citing a design, consuming some materials and manufacturing the jeans, at the end the hyper jeans is produced and put in the inventory"
+;; (mut/create-economic-event {
+;;                                                           :provider :worker
+;;                                                           :receiver :textile-lab
+;;                                                           :has-point-in-time (time/now)
+;;                                                           :action :cite
+;;                                                           :input-of 4
+;;                                                           :resource-quantity-has-numerical-value 1
+;;                                                           :resource-quantity-unit :each
+;;                                                           :resource-inventoried-as "hyperballad design"})
+;;                               (mut/create-economic-event {
+;;                                                           :provider :worker
+;;                                                           :receiver :textile-lab
+;;                                                           :has-point-in-time (time/now)
+;;                                                           :action :consume
+;;                                                           :input-of 4
+;;                                                           :resource-quantity-has-numerical-value 10
+;;                                                           :resource-quantity-has-unit :kilo
+;;                                                           :resource-inventoried-as "Raw red cotton"})
+;;
+;;                               (mut/create-economic-event {
+;;                                                           :provider :worker
+;;                                                           :receiver :textile-lab
+;;                                                           :has-point-in-time (time/now)
+;;                                                           :action :work
+;;                                                           :input-of 4
+;;                                                           :effort-quantity-has-numerical-value 4
+;;                                                           :effort-quantity-has-unit :hour
+;;                                                           :resource-conforms-to "clothes manufacturing"
+;;                                                           :note "Done all the work!"})
+;;                               (mut/create-economic-event {
+;;                                                           :provider :textile-lab
+;;                                                           :receiver :textile-lab
+;;                                                           :has-point-in-time (time/now)
+;;                                                           :action :produce
+;;                                                           :output-of 4
+;;                                                           :current-location "TextileLab place"
+;;                                                           :resource-classified-as [:red :jeans :cotton :slim-fit]
+;;                                                           :resource-quantity-has-numerical-value 1
+;;                                                           :resource-quantity-has-unit :each
+;;                                                           :resource-inventoried-as "hyper jeans"})
+;;                               ; Check if the process stored correctly all the input events
+;;                               (-> (q/query-process {:id 4})
+;;                                   :inputs
+;;                                   :id) => [5, 6, 7]
+;;                               ; Check if the process stored correctly all the output events
+;;                               (-> (q/query-process {:id 4})
+;;                                   :outputs
+;;                                   :id) => [8]
+;;                               ; Check if the hyper jeans resource is produced correctly
+;;                               (-> (q/query-resource {:name "hyper jeans"})
+;;                                   :current-location) => "TextileLab place"
+;;                               )
+
+))
+
