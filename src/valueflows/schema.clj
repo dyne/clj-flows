@@ -24,7 +24,12 @@
 
 (defn resolver-map
   []
-  {}
+  {:query/query-economic-event (fn [_ args _] (let [{:keys [id]} args]
+                                                (q/query-economic-event {:economic-event-id id})
+                                                ))
+   :query/query-all-economic-events (fn [] (q/query-economic-event))
+   :mutation/create-economic-event (fn [] (str "test"))
+   }
   ;; {:query/process (fn [_ args _] (let [{:keys [id]} args]
   ;;                                 (query :Process id)))
   ;; :query/get-inputs (fn [_ _ value] (let [{:keys [id]} value]

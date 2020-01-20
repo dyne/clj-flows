@@ -22,12 +22,14 @@
             [clj-storage.core :as store]
    ))
 
-(defn query [])
-
-;; TODO: only supports exact queries for now, need to add functions like before
 (defn query-economic-event
-  [{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
-  (store/query (:transaction-store stores) param-map))
+  ([]
+   (store/query (:transaction-store stores) {})
+   )
+  ([{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
+   (store/query (:transaction-store stores) param-map)
+   )
+  )
 
 (defn query-resource
   [{:keys [name]}]
@@ -40,17 +42,14 @@
                                                       {"$group" {:_id "$provider"
                                                                  :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])]
 
-    (clojure.pprint/pprint resource)
-    (log/spy received)
-    (log/spy provided)
-    (log/spy (if (nil? (first received))
-               0
-               (int (:resource-quantity-has-numerical-value (first received)))
-               ))
-    (log/spy (if (nil? (first provided))
-               0
-               (int (:resource-quantity-has-numerical-value (first received)))
-               ))
+    (if (nil? (first received))
+      0
+      (int (:resource-quantity-has-numerical-value (first received)))
+      )
+    (if (nil? (first provided))
+      0
+      (int (:resource-quantity-has-numerical-value (first received)))
+      )
     {:resource-quantity-has-numerical-value (- (if (nil? (first received))
                                                  0
                                                  (int (:resource-quantity-has-numerical-value (first received)))

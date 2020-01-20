@@ -19,4 +19,4 @@
   (:require [taoensso.timbre :as log]
             [clojure.spec.alpha :as spec]))
 
-(spec/def ::valueflows (spec/keys :req-un [::material]))
+;; (spec/def ::valueflows (spec/keys :req-un [::material]))

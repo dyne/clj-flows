@@ -1,5 +1,109 @@
+{
+ :input-objects {
+                 :EconomicEventCreateParams
+                 {:fields
+                   {:note {:type String}
+                    :hasPointInTime {:type String}
+                    :provider {:type Int}
+                    :receiver {:type Int}
+                    :action {:type Int}
+                    :inputOf {:type Int}
+                    :outputOf {:type Int}
+                    :resourceQuantityNumericValue {:type Float}
+                    :resourceQuantityUnit {:type Int}
+                    :effortQuantityNumericValue {:type Float}
+                    :effortQuantityUnit {:type Int}
+                    :resourceInventoriedAs {:type Int}
+                    :resourceConformsTo {:type Int}}}}
 
  :objects {
-           :queries {}
-           :mutations {}
+
+           :Unit {:description "Defines a unit of measurement, along with its display symbol."
+                  :fields {:id {:type (non-null Int)}
+                           :name {:type String}}}
+           :ResourceSpecification {:description "An informal or formal textual identifier for an object. Does not imply uniqueness."
+                                                          :fields {:id {:type (non-null Int)}
+                                                                   :name {:type String}
+                                                                   :note {:type String}}}
+           :Process {
+                     :description "An activity that changes inputs into outputs. It could transform or transport economic resource(s)."
+                     :fields {:id {:type Int}
+                              :name {:description "An informal or formal textual identifier for an item. Does not imply uniqueness."
+                                     :type (non-null String)}
+                              :note {:type String
+                                     :description "A textual description or comment."}
+                              :before {:type String
+                                       :description "The economic event occurred prior to this date/time."}
+                                        ; Inverse relationships and queries
+                              :inputs {:type (list :EconomicEvent)}
+                              :outputs {:type (list :EconomicEvent)}
+                              }
+                     }
+           ;; :Intent {
+           ;;         :description   "An informal or formal textual identifier for an item. Does not imply uniqueness."
+           ;;         :fields {:id {:type Int}
+           ;;                  :provider {:type String}
+           ;;                  :receiver {:type String}
+           ;;                  :action {:type String}
+           ;;                  :available-quantity-has-numeric-value {:type Float}
+           ;;                  :available-quantity-has-unit {:type Unit}
+           ;;                  :description {:type String}
+           ;;                  :at-location {:type String}
+           ;;                  :resource-classified-as {:type ResourceSpecification}
+           ;;                  :resource-conforms-to {:type String}}
+           ;;         }
+           :EconomicResource {:description "References one or more concepts in a common taxonomy or other classification scheme for purposes of categorization or grouping."
+                              :fields {:id {:type (non-null Int)}
+                                       :name {:type String}
+                                       :accountingQuantityNumericValue {:type Float}
+                                       :accountingQuantityUnit {:type Unit}
+                                       :onhandQuantityUnit {:type Unit}
+                                       :onhandQuantityNumericValue {:type Float}
+                                       :unitOfEffort {:type Unit}
+                                       :note {:type String}
+                                       :conformsTo {:type ResourceSpecification}}}
+           :EconomicEvent {:description "Relates an economic event to a verb, such as consume, produce, work, improve, etc."
+                           :fields {:id {:type (non-null Int)}
+                                    :note {:type String}
+                                    :hasPointInTime {:type String}
+                                    :provider {:type String}
+                                    :receiver {:type String}
+                                    :action {:type String}
+                                    :inputOf {:type Process}
+                                    :outputOf {:type Process}
+                                    :currentLocation {:type String}
+                                    :resourceQuantityHasNumericValue {:type Float}
+                                    :resourcequantityHasUnit {:type Unit}
+                                    :resourceInventoriedAs {:type EconomicResource}
+                                    ;; :satisfies {:type Intent}
+                                    :toResourceInventoriedAs {:type EconomicResource}
+                                    :resourceClassifiedAs {:type ResourceSpecification}}}
+           }
+ :queries {
+           :economicEvent {:type :EconomicEvent
+                           :description "Retrieve the economic event by its ID, if it exists."
+                           :args {:id {:type ID}}
+                           :resolve :query/query-economic-event}
+           :allEconomicEvents {:type (list :EconomicEvent)
+                               :description "Retrieve all economic events"
+                               :args {}
+                               :resolve :query/query-all-economic-events
+                               }
+           ;; :economicResource {}
+           ;; :allEconomicResource {}
+           ;; :process {}
+           ;; :allProcesses {}
+           ;; :intent {}
+           ;; :allIntents {}
+           }
+ :mutations {
+             :createEconomicEvent {
+                                   :type :EconomicEvent
+                                   :description "Add a new event with the possibility to create or not a new resource"
+                                   :args {:event {:type :EconomicEventCreateParams}}
+                                   :resolve :mutation/create-economic-event
+                                   }
+            ;; :createIntent {}
+            ;; :createProcess {}
+             }
  }
