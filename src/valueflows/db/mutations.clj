@@ -17,21 +17,93 @@
 
 (ns valueflows.db.mutations
   (:require [taoensso.timbre :as log]
+            [fxc.core :as fxc]
+            [clj-time.core :as t]
             [clj-storage.core :as storage]
             [valueflows.stores :refer [stores]]))
 
 (def actions #{:offer :commit :transfer :use :consume :produce :work :exchange})
 
 (defn create-economic-event
-  [{:keys [note has-point-in-time provider receiver action input-of output-of resource-quantity-numeric-value resource-quantity-unit effort-quantity-value effort-quantity-unit resource-inventory-as resource-conforms-to] :as event-map}]
+  [action resource-quantity-has-numerical-value resource-quantity-has-unit params]
+  (let [
+        provider (or (:provider params) nil)
+        receiver (or (:receiver params) nil)
+        has-point-in-time (if-let [has-point-in-time (:has-point-in-time params)] has-point-in-time (t/now))
+        note (or (:note params) "")
+        resource-inventoried-as (or (:resource-inventoried-as params) nil)
+        current-location (or (:current-location params) nil)
+        resource-classified-as (or (:resource-classified-as params) [])
+        resource-inventoried-as (or (:resource-inventoried-as params) nil)
+        to-resource-inventoried-as (or (:to-resource-inventoried-as params) nil)
+        economic-event-id (or (:economic-event-id params) (fxc.core/generate 32))
+        input-of (or (:input-of params) nil)
+        output-of (or (:output-of params) nil)
+        satisfies (or (:satisfies params) nil)
+        economic-event {:_id (str has-point-in-time "-" provider)
+                        :economic-event-id economic-event-id
+                        :note note
+                        :has-point-in-time has-point-in-time
+                        :provider provider
+                        :receiver receiver
+                        :action action
+                        :resource-quantity-has-numerical-value resource-quantity-has-numerical-value
+                        :resource-quantity-has-unit resource-quantity-has-unit
+                        :resource-classified-as resource-classified-as
+                        :input-of input-of
+                        :output-of output-of
+                        :current-location current-location
+                        :satisfies satisfies
+                        :resource-inventoried-as resource-inventoried-as
+                        :to-resource-inventoried-as to-resource-inventoried-as
 
-  (log/spy (storage/store! (:transaction-store stores) :id event-map)))
+                        }
+        ]
+    (log/spy (storage/store! (:transaction-store stores) :_id economic-event))
+    )
+  )
 
 
-(defn create-intent [{:keys [provider action available-quantity-has-numeric-value available-quantity-has-unit resource-conforms-to resource-classified-as at-location description] :as event-map}]
-  (log/spy (storage/store! (:intent-store stores) :id event-map)))
+(defn create-intent
+  [action available-quantity-has-numeric-value available-quantity-has-unit description params]
+  (let [has-point-in-time (if-let [has-point-in-time (:has-point-in-time params)] has-point-in-time (t/now))
+        provider (or (:provider params) nil)
+        receiver (or (:receiver params) nil)
+        intent-id (or (:intent-id params) (fxc.core/generate 32))
+        at-location (or (:at-location params) nil)
+        resource-classified-as (or (:resource-classified-as params) [])
+        resource-conforms-to (or (:resource-conforms-to params) [])
+
+        intent {:_id (str has-point-in-time "-" (or (:provider params) (:receiver params)))
+                :intent-id intent-id
+                :provider provider
+                :receiver receiver
+                :has-point-in-time has-point-in-time
+                :action action
+                :available-quantity-has-numeric-value available-quantity-has-numeric-value
+                :available-quantity-has-unit available-quantity-has-unit
+                :description description
+                :at-location at-location
+                :resource-classified-as resource-classified-as
+                :resource-conforms-to resource-conforms-to
+                }]
+    (log/spy (storage/store! (:intent-store stores) :_id intent)))
+    )
 
 
-(defn create-process [{:keys [name note before] :as event-map}]
-  (storage/store! (:process-store stores) :id event-map)
+(defn create-process
+  [name params]
+  (let [has-point-in-time (if-let [has-point-in-time (:has-point-in-time params)] has-point-in-time (t/now))
+        note (or (:note params) "")
+        before (or (:before params) nil)
+        process {:_id (str has-point-in-time)
+                 :name name
+                 :note note
+                 :before before
+                 :has-point-in-time has-point-in-time
+                 :process-id (or (:process-id params) (fxc.core/generate 32))
+                 }
+        ]
+    (storage/store! (:process-store stores) :_id process)
+    )
   )

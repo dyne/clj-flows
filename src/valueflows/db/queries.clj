@@ -40,7 +40,9 @@
                                                       {"$group" {:_id "$provider"
                                                                  :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])]
 
-
+    (clojure.pprint/pprint resource)
+    (log/spy received)
+    (log/spy provided)
     (log/spy (if (nil? (first received))
                0
                (int (:resource-quantity-has-numerical-value (first received)))
@@ -73,9 +75,24 @@
   )
 
 
-(defn query-process []
-  "Return the list of all processes"
-  (let [processes (store/query (:process-store stores) {})]
-    processes
-    )
+
+(defn query-process
+  ([]
+   (let [processes (store/query (:process-store stores) {})]
+     processes
+     )
+   )
+  (
+   [{:keys [process-id]}]
+   (let [process (store/query (:process-store stores) {:process-id process-id})
+         inputs (store/query (:transaction-store stores) {:input-of process-id})
+         outputs (store/query (:transaction-store stores) {:output-of process-id})
+         ]
+     (assoc (-> process
+                first)
+            :inputs inputs
+            :outputs outputs
+            )
+     ))
+
   )

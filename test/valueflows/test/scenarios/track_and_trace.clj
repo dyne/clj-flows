@@ -54,36 +54,21 @@
                         ; - Broadcast available resources on the network
                         ; - Transfer resources
                            (fact "An unknown agent transfer some textile material to Waste Management"
-                                 (mut/create-economic-event {
+                                 (mut/create-economic-event :transfer 200 :kilo {
                                                              :receiver :waste-management
-                                                             :has-point-in-time (time/now)
-                                                             :action :transfer
-                                                             :resource-quantity-has-numerical-value 200
-                                                             :resource-quantity-has-unit :kilo
                                                              :to-resource-inventoried-as "Lot 173 textile material"
-                                                             :resource-conforms-to :textile-material
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
-                                 (mut/create-economic-event {
+                                 (mut/create-economic-event :transfer 200 :kilo {
                                                              :receiver :waste-management
-                                                             :has-point-in-time (time/now)
-                                                             :action :transfer
-                                                             :resource-quantity-has-numerical-value 200
-                                                             :resource-quantity-has-unit :kilo
                                                              :to-resource-inventoried-as "Lot 173 textile material"
-                                                             :resource-conforms-to :textile-material
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
-                                 (mut/create-economic-event {
+                                 (mut/create-economic-event :transfer 100 :kilo {
                                                              :provider :waste-management
                                                              :receiver :textile-lab
-                                                             :has-point-in-time (time/now)
-                                                             :action :transfer
                                                              :resource-inventoried-as "Lot 173 textile material"
-                                                             :resource-quantity-has-numerical-value 100
-                                                             :resource-quantity-has-unit :kilo
                                                              :to-resource-inventoried-as "Processed textile"
-                                                             :resource-conforms-to :textile-material
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
@@ -96,106 +81,90 @@
                                      :to-resource-inventoried-as) =>  "Lot 173 textile material"
                                  )
 
-(fact "Waste Management broadcasts an offer to transfer Lot 173 textile material"
-                                 (mut/create-intent {
+                           (fact "Waste Management broadcasts an offer to transfer Lot 173 textile material"
+                                 (mut/create-intent :transer 200 :kilo "Availabe to transfer a lot of red cotton textile material in good condition" {
                                                      :provider :waste-management
-                                                     :action :transfer
-                                                     :available-quantity-has-numerical-value 200
-                                                     :available-quantity-has-unit :kilo
                                                      :resource-conforms-to :textile-material
                                                      :resource-classified-as [:red :cotton]
-                                                     :at-location "52.372807,4.8981023"
-                                                     :description "Available to transfer a lot of red cotton textile material in good condition"})
+                                                                                                                                                      :at-location "52.372807,4.8981023"})
                                  (-> (q/query-intent {:provider "waste-management"})
                                      first
                                      :resource-conforms-to
                                      ) => "textile-material")
 
-(fact "Waste Management transfers part of Lot 173 to Textile Lab"
-                                 (mut/create-economic-event {
-                                                             :provider :waste-management
-                                                             :receiver :textile-lab
-                                                             :has-point-in-time (time/now)
-                                                             :action :transfer
-                                                             :resource-quantity-has-numerical-value 15
-                                                             :satisfies 2
-                                                             :resource-quantity-unit :kilo
-                                                             :resource-inventoried-as "Lot 173 textile material"
-                                                             :to-resource-inventoried-as "Raw red cotton"
-                                                             :current-location "52.372807,4.8981023"
-                                                             :resource-classified-as [:red :cotton]})
+                           (fact "Waste Management transfers part of Lot 173 to Textile Lab"
+                                 (mut/create-economic-event :transfer 15 :kilo {
+                                                                                :provider :waste-management
+                                                                                :receiver :textile-lab
+                                                                                :satisfies 2
+                                                                                :resource-inventoried-as "Lot 173 textile material"
+                                                                                :to-resource-inventoried-as "Raw red cotton"
+                                                                                :current-location "52.372807,4.8981023"
+                                                                                :resource-classified-as [:red :cotton]})
                                  (-> (q/query-economic-event {:receiver "textile-lab"})
                                      last
                                      :to-resource-inventoried-as) => "Raw red cotton"
                                  (-> (q/query-resource {:name "Raw red cotton"})
-:resource-quantity-has-numerical-value
+                                     :resource-quantity-has-numerical-value
                                      ) => 15
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
                                      :resource-quantity-has-numerical-value) => 285)
-(fact "Textile Lab creates a new process to produce a new pair of jeans"
-      (mut/create-process {
-                           :name "Create a new pair of hyper jeans"
-                           :note "Hyper jeans will be produced using the hyperballad design"
-                           :before (time/now)})
-      (-> (q/query-process)
-          last
-          :name
-          ) => "Create a new pair of hyper jeans")
+
+                           (fact "Textile Lab creates a new process to produce a new pair of jeans"
+                                 (mut/create-process "Create a new pair of hyper jeans"
+                                                     {:note "Hyper jeans will be produced using the hyperballad design"
+                                                      :before (time/now)})
+                                 (-> (q/query-process)
+                                     last
+                                     :name
+                                     ) => "Create a new pair of hyper jeans")
 
 
-;; (fact "A bunch of work is done over the process: citing a design, consuming some materials and manufacturing the jeans, at the end the hyper jeans is produced and put in the inventory"
-;; (mut/create-economic-event {
-;;                                                           :provider :worker
-;;                                                           :receiver :textile-lab
-;;                                                           :has-point-in-time (time/now)
-;;                                                           :action :cite
-;;                                                           :input-of 4
-;;                                                           :resource-quantity-has-numerical-value 1
-;;                                                           :resource-quantity-unit :each
-;;                                                           :resource-inventoried-as "hyperballad design"})
-;;                               (mut/create-economic-event {
-;;                                                           :provider :worker
-;;                                                           :receiver :textile-lab
-;;                                                           :has-point-in-time (time/now)
-;;                                                           :action :consume
-;;                                                           :input-of 4
-;;                                                           :resource-quantity-has-numerical-value 10
-;;                                                           :resource-quantity-has-unit :kilo
-;;                                                           :resource-inventoried-as "Raw red cotton"})
-;;
-;;                               (mut/create-economic-event {
-;;                                                           :provider :worker
-;;                                                           :receiver :textile-lab
-;;                                                           :has-point-in-time (time/now)
-;;                                                           :action :work
-;;                                                           :input-of 4
-;;                                                           :effort-quantity-has-numerical-value 4
-;;                                                           :effort-quantity-has-unit :hour
-;;                                                           :resource-conforms-to "clothes manufacturing"
-;;                                                           :note "Done all the work!"})
-;;                               (mut/create-economic-event {
-;;                                                           :provider :textile-lab
-;;                                                           :receiver :textile-lab
-;;                                                           :has-point-in-time (time/now)
-;;                                                           :action :produce
-;;                                                           :output-of 4
-;;                                                           :current-location "TextileLab place"
-;;                                                           :resource-classified-as [:red :jeans :cotton :slim-fit]
-;;                                                           :resource-quantity-has-numerical-value 1
-;;                                                           :resource-quantity-has-unit :each
-;;                                                           :resource-inventoried-as "hyper jeans"})
-;;                               ; Check if the process stored correctly all the input events
-;;                               (-> (q/query-process {:id 4})
-;;                                   :inputs
-;;                                   :id) => [5, 6, 7]
-;;                               ; Check if the process stored correctly all the output events
-;;                               (-> (q/query-process {:id 4})
-;;                                   :outputs
-;;                                   :id) => [8]
-;;                               ; Check if the hyper jeans resource is produced correctly
-;;                               (-> (q/query-resource {:name "hyper jeans"})
-;;                                   :current-location) => "TextileLab place"
-;;                               )
+                           (fact "A bunch of work is done over the process: citing a design, consuming some materials and manufacturing the jeans, at the end the hyper jeans is produced and put in the inventory"
+                                 (let [process-id (-> (q/query-process)
+                                                      last
+                                                      :process-id)]
+                                   (mut/create-economic-event
+                                    :cite 1 :each
+                                    {
+                                     :provider :worker
+                                     :receiver :textile-lab
+                                     :input-of process-id
+                                     :resource-inventoried-as "hyperballad design"})
+
+                                   (mut/create-economic-event :consume 10 :kilo {
+                                                                                 :provider :worker
+                                                                                 :receiver :textile-lab
+                                                                                 :input-of process-id
+                                                                                 :resource-inventoried-as "Raw red cotton"
+                                                                                 })
+
+                                   (mut/create-economic-event :work 4 :hour {
+                                                                             :provider :worker
+                                                                             :receiver :textile-lab                                                           :has-point-in-time (time/now)
+                                                                             :input-of process-id
+                                                                             :resource-conforms-to "clothes manufacturing"
+                                                                             :note "Done all the work!"})
+
+                                   (mut/create-economic-event :produce 1 :each {
+                                                                                :provider :textile-lab
+                                                                                :receiver :textile-lab
+                                                                                :output-of process-id
+                                                                                :current-location "TextileLab place"
+                                                                                :resource-classified-as [:red :jeans :cotton :slim-fit]
+                                                                                :resource-inventoried-as "hyper jeans"})
+
+                                   ;; Check if the process includes all the inputs
+                                   (count (:inputs (select-keys (q/query-process {:process-id process-id}) [:inputs])))
+                                   => 3
+
+                                   ;; Check if the process includes all the outpts
+                                   (count (:outputs (select-keys (q/query-process {:process-id process-id}) [:outputs])))
+                                   => 1
+                                   )
+
+
+                                 )
 
 ))
 

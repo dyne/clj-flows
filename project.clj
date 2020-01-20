@@ -33,6 +33,9 @@
                  ;; logging done right with timbre
                  [com.taoensso/timbre "4.10.0"]
 
+                 ;; fxc secret sharing protocol
+                 [org.clojars.dyne/fxc "0.6.0"]
+
                  ;; yaml config
                  [exoscale/yummy "0.2.6" :exclusions [org.clojure/clojure]]
 
