@@ -45,7 +45,7 @@
 
                  ;; date/time
                  [clj-time "0.15.2"]
-                 
+                 [clojure.java-time "0.3.2"] 
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;
                  ;; storage lib

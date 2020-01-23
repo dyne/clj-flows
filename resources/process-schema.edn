@@ -1,19 +1,27 @@
 {
 :input-objects {
-                 :EconomicEventCreateParams
-                 {:fields
-                   {:note {:type String}
-                    :hasPointInTime {:type String}
-                    :provider {:type Int}
-                    :receiver {:type Int}
-                    :action {:type String}
-                    :inputOf {:type Int}
-                    :outputOf {:type Int}
-                    :economicEventId {:type String}
-                    :resourceQuantityHasNumericalValue {:type Float}
-                    :resourceQuantityHasUnit {:type String}
-                    :resourceInventoriedAs {:type Int}
-                    :resourceConformsTo {:type Int}}}}
+                :EconomicEventCreateParams {
+                                            :fields {
+                                                    :note {:type String}
+                                                    :hasPointInTime {:type String}
+                                                    :provider {:type Int}
+                                                    :receiver {:type Int}
+                                                    :action {:type String}
+                                                    :inputOf {:type Int}
+                                                    :outputOf {:type Int}
+                                                    :economicEventId {:type String}
+                                                    :resourceQuantityHasNumericalValue {:type Float}
+                                                    :resourceQuantityHasUnit {:type String}
+                                                    :resourceInventoriedAs {:type Int}
+                                                    :resourceConformsTo {:type Int}}}
+                :ProcessCreateParams {
+                                      :fields {
+                                               :name {:type String}
+                                               :processId {:type String}
+                                               :before {:type String}
+                                               :note {:type String}
+                                               }}
+                }
 
  :objects {
 
@@ -29,6 +37,7 @@
                      :fields {:id {:type Int}
                               :name {:description "An informal or formal textual identifier for an item. Does not imply uniqueness."
                                      :type (non-null String)}
+                              :processId {:type String}
                               :note {:type String
                                      :description "A textual description or comment."}
                               :before {:type String
@@ -81,18 +90,26 @@
            }
  :queries {
            :economicEvent {:type :EconomicEvent
-                           :description "Retrieve the economic event by its ID, if it exists."
+                           :description "Return the economic event by its ID, if it exists."
                            :args {:id {:type ID}}
                            :resolve :query/query-economic-event}
            :allEconomicEvents {:type (list :EconomicEvent)
-                               :description "Retrieve all economic events"
+                               :description "Return all economic events"
                                :args {}
                                :resolve :query/query-all-economic-events
                                }
            ;; :economicResource {}
            ;; :allEconomicResource {}
-           ;; :process {}
-           ;; :allProcesses {}
+           :process {:type :Process
+                     :description "Return the process by its ID if it exists"
+                     :args {:id {:type ID}}
+                     :resolve :query/query-process
+                     }
+           :allProcesses {:type (list :Process)
+                          :description "Return all processes"
+                          :args {}
+                          :resolve :query/query-all-processes
+                          }
            ;; :intent {}
            ;; :allIntents {}
            }
@@ -104,6 +121,11 @@
                                    :resolve :mutation/create-economic-event
                                    }
             ;; :createIntent {}
-            ;; :createProcess {}
+             :createProcess {
+                             :type :Process
+                             :description "Create a new process"
+                             :args {:process {:type :ProcessCreateParams}}
+                             :resolve :mutation/create-process
+                             }
              }
  }

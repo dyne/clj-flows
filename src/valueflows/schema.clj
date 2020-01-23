@@ -28,7 +28,13 @@
 
 (defn resolver-map
   []
-  {:query/query-economic-event (fn [_ args _] (let [{:keys [id]} args
+  {:query/query-process (fn [_ args _] (let [{:keys [id]} args
+                                             process (clojure.set/rename-keys (q/query-process {:process-id id})
+                                                                              {:process-id :processId}) ]
+                                         process
+                                         ))
+   :query/query-all-processes (fn [_ _ _] (let []))
+   :query/query-economic-event (fn [_ args _] (let [{:keys [id]} args
                                                     economicEvent (q/query-economic-event {:economic-event-id id})
                                                     ]
                                                 {:note (:note economicEvent)
@@ -62,6 +68,13 @@
                                                                      )]
                                                   allEvents
                                                   ))
+   :mutation/create-process (fn [_ args _] (let [{:keys [name processId before note]} (:process args)
+                                                 params {:note note
+                                                         :before before
+                                                         :process-id processId}
+                                                 ]
+                                             (m/create-process name params)
+                                             ))
    :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs resourceConformsTo economicEventId]} (:event args)
                                                         params {:note note
                                                                 :economic-event-id economicEventId
