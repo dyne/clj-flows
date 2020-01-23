@@ -29,7 +29,7 @@
   (let [
         provider (or (:provider params) nil)
         receiver (or (:receiver params) nil)
-        has-point-in-time (if-let [has-point-in-time (:has-point-in-time params)] has-point-in-time (t/now))
+        has-point-in-time (if-let [has-point-in-time (:has-point-in-time params)] has-point-in-time "1579710135")
         note (or (:note params) "")
         resource-inventoried-as (or (:resource-inventoried-as params) nil)
         current-location (or (:current-location params) nil)
@@ -40,7 +40,7 @@
         input-of (or (:input-of params) nil)
         output-of (or (:output-of params) nil)
         satisfies (or (:satisfies params) nil)
-        economic-event {:_id (str has-point-in-time "-" provider)
+        economic-event {:_id (str has-point-in-time "-"  (fxc.core/generate 32))
                         :economic-event-id economic-event-id
                         :note note
                         :has-point-in-time has-point-in-time
@@ -59,6 +59,8 @@
 
                         }
         ]
+    (log/spy "here")
+    (log/spy economic-event)
     (log/spy (storage/store! (:transaction-store stores) :_id economic-event))
     )
   )

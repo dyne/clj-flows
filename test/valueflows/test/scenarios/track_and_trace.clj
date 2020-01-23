@@ -55,7 +55,8 @@
                         ; - Transfer resources
                            (fact "An unknown agent transfer some textile material to Waste Management"
                                  (mut/create-economic-event :transfer 200 :kilo {
-                                                             :receiver :waste-management
+                                                                                 :receiver :waste-management
+                                                                                 :economic-event-id "test-1"
                                                              :to-resource-inventoried-as "Lot 173 textile material"
                                                              :current-location "52.372807,4.8981023"
                                                              :resource-classified-as [:red :cotton]})
@@ -76,7 +77,7 @@
                                      ) => 300
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
                                      :current-location) => "52.372807,4.8981023"
-                                 (-> (q/query-economic-event {:receiver "waste-management"})
+                                 (-> (q/query-economic-event {:economic-event-id "test-1"})
                                      first
                                      :to-resource-inventoried-as) =>  "Lot 173 textile material"
                                  )
@@ -167,4 +168,5 @@
                                  )
 
 ))
+;; => true
 

@@ -20,14 +20,59 @@
 
             [valueflows.stores :refer [stores]]
             [clj-storage.core :as store]
-   ))
+            )
+  )
+
+
+
+(defn query-process
+  ([]
+   (let [processes (store/query (:process-store stores) {})]
+     processes
+     )
+   )
+  (
+   [{:keys [process-id]}]
+   (let [process (store/query (:process-store stores) {:process-id process-id})
+         inputs (store/query (:transaction-store stores) {:input-of process-id})
+         outputs (store/query (:transaction-store stores) {:output-of process-id})
+         ]
+     (if (empty? process)
+       nil
+       (assoc (-> process
+                  first)
+              :inputs inputs
+              :outputs outputs
+              )
+       )
+     ))
+
+  )
+
+
 
 (defn query-economic-event
   ([]
-   (store/query (:transaction-store stores) {})
+   (let [allEvents (map #(assoc %
+                                :input-of (query-process {:process-id (:input-of %)})
+                                :output-of (query-process {:process-id (:output-of %)})
+                                ) (store/query (:transaction-store stores) {}))
+         ]
+     allEvents
+
+     )
    )
   ([{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
-   (store/query (:transaction-store stores) param-map)
+   (let [economicEvent (-> (store/query (:transaction-store stores) param-map)
+                           first)
+         inputProcess (query-process {:process-id input-of})
+         outputProcess (query-process {:process-id output-of})
+         ]
+     (assoc economicEvent
+            :input-of inputProcess
+            :output-of outputProcess
+            )
+     )
    )
   )
 
@@ -75,23 +120,3 @@
 
 
 
-(defn query-process
-  ([]
-   (let [processes (store/query (:process-store stores) {})]
-     processes
-     )
-   )
-  (
-   [{:keys [process-id]}]
-   (let [process (store/query (:process-store stores) {:process-id process-id})
-         inputs (store/query (:transaction-store stores) {:input-of process-id})
-         outputs (store/query (:transaction-store stores) {:output-of process-id})
-         ]
-     (assoc (-> process
-                first)
-            :inputs inputs
-            :outputs outputs
-            )
-     ))
-
-  )

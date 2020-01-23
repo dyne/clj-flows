@@ -1,18 +1,17 @@
 {
- :input-objects {
+:input-objects {
                  :EconomicEventCreateParams
                  {:fields
                    {:note {:type String}
                     :hasPointInTime {:type String}
                     :provider {:type Int}
                     :receiver {:type Int}
-                    :action {:type Int}
+                    :action {:type String}
                     :inputOf {:type Int}
                     :outputOf {:type Int}
-                    :resourceQuantityNumericValue {:type Float}
-                    :resourceQuantityUnit {:type Int}
-                    :effortQuantityNumericValue {:type Float}
-                    :effortQuantityUnit {:type Int}
+                    :economicEventId {:type String}
+                    :resourceQuantityHasNumericalValue {:type Float}
+                    :resourceQuantityHasUnit {:type String}
                     :resourceInventoriedAs {:type Int}
                     :resourceConformsTo {:type Int}}}}
 
@@ -63,7 +62,7 @@
                                        :note {:type String}
                                        :conformsTo {:type ResourceSpecification}}}
            :EconomicEvent {:description "Relates an economic event to a verb, such as consume, produce, work, improve, etc."
-                           :fields {:id {:type (non-null Int)}
+                           :fields {
                                     :note {:type String}
                                     :hasPointInTime {:type String}
                                     :provider {:type String}
@@ -71,9 +70,10 @@
                                     :action {:type String}
                                     :inputOf {:type Process}
                                     :outputOf {:type Process}
+                                    :economicEventId {:type String}
                                     :currentLocation {:type String}
                                     :resourceQuantityHasNumericValue {:type Float}
-                                    :resourcequantityHasUnit {:type Unit}
+                                    :resourcequantityHasUnit {:type String}
                                     :resourceInventoriedAs {:type EconomicResource}
                                     ;; :satisfies {:type Intent}
                                     :toResourceInventoriedAs {:type EconomicResource}
