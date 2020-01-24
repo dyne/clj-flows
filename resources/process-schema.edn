@@ -12,7 +12,8 @@
                                                     :economicEventId {:type String}
                                                     :resourceQuantityHasNumericalValue {:type Float}
                                                     :resourceQuantityHasUnit {:type String}
-                                                    :resourceInventoriedAs {:type Int}
+                                                    :resourceInventoriedAs {:type String}
+                                                    :toResourceInventoriedAs {:type String}
                                                     :resourceConformsTo {:type Int}}}
                 :ProcessCreateParams {
                                       :fields {
@@ -61,14 +62,11 @@
            ;;                  :resource-conforms-to {:type String}}
            ;;         }
            :EconomicResource {:description "References one or more concepts in a common taxonomy or other classification scheme for purposes of categorization or grouping."
-                              :fields {:id {:type (non-null Int)}
+                              :fields {
                                        :name {:type String}
-                                       :accountingQuantityNumericValue {:type Float}
-                                       :accountingQuantityUnit {:type Unit}
-                                       :onhandQuantityUnit {:type Unit}
-                                       :onhandQuantityNumericValue {:type Float}
-                                       :unitOfEffort {:type Unit}
-                                       :note {:type String}
+                                       :resourceQuantityHasNumericalValue {:type Float}
+                                       :resourceQuantityHasUnit {:type String}
+                                       :currentLocation {:type String}
                                        :conformsTo {:type ResourceSpecification}}}
            :EconomicEvent {:description "Relates an economic event to a verb, such as consume, produce, work, improve, etc."
                            :fields {
@@ -98,8 +96,16 @@
                                :args {}
                                :resolve :query/query-all-economic-events
                                }
-           ;; :economicResource {}
-           ;; :allEconomicResource {}
+           :economicResource {:type :EconomicResource
+                              :description "Return the Resource by its ID if it exists"
+                              :args {:name {:type String}}
+                              :resolve :query/query-resource
+                              }
+           :allEconomicResource {:type (list :EconomicResource)
+                                 :description "return all resources"
+                                 :args {}
+                                 :resolve :query/query-all-resources
+                                 }
            :process {:type :Process
                      :description "Return the process by its ID if it exists"
                      :args {:id {:type ID}}
@@ -120,7 +126,7 @@
                                    :args {:event {:type :EconomicEventCreateParams}}
                                    :resolve :mutation/create-economic-event
                                    }
-            ;; :createIntent {}
+             ;; :createIntent {}
              :createProcess {
                              :type :Process
                              :description "Create a new process"

@@ -17,9 +17,9 @@
 
 (ns valueflows.db.queries
   (:require [taoensso.timbre :as log]
-            [camel-snake-kebab.core :as csk] 
             [valueflows.stores :refer [stores]]
             [clj-storage.core :as store]
+            [clojure.pprint :as pp]
             )
   )
 
@@ -85,36 +85,34 @@
 
 (defn query-resource
   [{:keys [name]}]
-  "Track how much of a specific resource exists in the network (check :resource-inventoried-as if received and :to-resource-inventoried-as if provided.)"
-  (let [resource (store/query (:transaction-store stores) {:to-resource-inventoried-as name})
-        received (store/aggregate (:transaction-store stores) [{"$match" {:to-resource-inventoried-as name}}
+  (let [resource (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
+        received (store/aggregate (:transaction-store stores) [{"$match" {:toResourceInventoriedAs name}}
                                                       {"$group" {:_id "$receiver"
-                                                                 :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])
-        provided (store/aggregate (:transaction-store stores) [{"$match" {:resource-inventoried-as name}}
+                                                                 :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
+        provided (store/aggregate (:transaction-store stores) [{"$match" {:resourceInventoriedAs name}}
                                                       {"$group" {:_id "$provider"
-                                                                 :resource-quantity-has-numerical-value {"$sum" "$resource-quantity-has-numerical-value"}}}])]
+                                                                 :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])]
 
-    (if (nil? (first received))
-      0
-      (int (:resource-quantity-has-numerical-value (first received)))
+    (if (empty? resource)
+      nil
+      {:resourceQuantityHasNumericalValue (- (if (empty? received)
+                                               0
+                                               (:resourceQuantityHasNumericalValue (first received))
+                                               )
+                                             (if (empty? provided)
+                                               0
+                                               (int (:resourceQuantityHasNumericalValue (first provided)))
+                                               ))
+       :resourceQuantityHasUnit (-> resource
+                                    last
+                                    :resourceQuantityHasUnit)
+       :name name
+       :currentLocation (-> resource
+                            last
+                            :currentLocation)
+       }
       )
-    (if (nil? (first provided))
-      0
-      (int (:resource-quantity-has-numerical-value (first received)))
-      )
-    {:resource-quantity-has-numerical-value (- (if (nil? (first received))
-                                                 0
-                                                 (int (:resource-quantity-has-numerical-value (first received)))
-                                                 )
-                                               (if (nil? (first provided))
-                                                 0
-                                                 (int (:resource-quantity-has-numerical-value (first provided)))
-                                                 ))
-     :name name
-     :current-location (-> resource
-                           last
-                           :current-location)
-     }))
+    ))
 
 
 (defn query-intent
