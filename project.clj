@@ -26,7 +26,6 @@
                  ;; graphql + http server
                  [com.walmartlabs/lacinia "0.36.0-alpha-2"]
                  [com.walmartlabs/lacinia-pedestal "0.13.0-alpha-1" :exclusions [org.clojure/tools.reader]]
-                 
                  ;; error handling
                  [failjure "1.3.0"]
 
@@ -44,7 +43,6 @@
                  [tolitius/mount-up "0.1.2" :exclusions [org.clojure/tools.logging]]
 
                  ;; date/time
-                 [clj-time "0.15.2"]
                  [clojure.java-time "0.3.2"] 
                  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Dyne libs
                  ;;

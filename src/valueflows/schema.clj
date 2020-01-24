@@ -19,72 +19,53 @@
             [com.walmartlabs.lacinia.util :as util]
             [com.walmartlabs.lacinia.schema :as schema]
             [taoensso.timbre :as log]
-
+            [camel-snake-kebab.core :as csk]
             [valueflows.db.queries :as q]
             [valueflows.db.mutations :as m]
+            [clojure.walk :as w]
             [clojure.edn :as edn])
-
+  (:use
+        clojure.pprint)
   )
 
 (defn resolver-map
   []
   {:query/query-process (fn [_ args _] (let [{:keys [id]} args
-                                             process (clojure.set/rename-keys (q/query-process {:process-id id})
-                                                                              {:process-id :processId}) ]
+                                             process (q/query-process {:processId id})]
                                          process
                                          ))
-   :query/query-all-processes (fn [_ _ _] (let []))
+
+   :query/query-all-processes (fn [_ _ _] (let [allProcesses (q/query-process)]
+                                            (log/spy allProcesses)
+                                            ))
+
    :query/query-economic-event (fn [_ args _] (let [{:keys [id]} args
-                                                    economicEvent (q/query-economic-event {:economic-event-id id})
+                                                    economicEvent (q/query-economic-event {:economicEventId id})
                                                     ]
-                                                {:note (:note economicEvent)
-                                                 :hasPointInTime (:has-point-in-time economicEvent)
-                                                 :provider (:provider economicEvent)
-                                                 :receiver (:receiver economicEvent)
-                                                 :action (:action economicEvent)
-                                                 :inputOf (:input-of economicEvent)
-                                                 :outputOf (:output-of economicEvent)
-                                                 :economicEventId (:economic-event-id economicEvent)
-                                                 :currentLocation (:current-location economicEvent)
-                                                 :resourceQuantityHasNumericValue (:resource-quantity-has-numerical-value economicEvent)
-                                                 :resourceQuantityHasUnit (:resource-quantity-has-unit economicEvent)
-                                                 :resourceInventoriedAs (:resource-inventoried-as economicEvent)
-                                                 :toResourceInventoriedAs (:to-resource-inventoried-as economicEvent)
-                                                 :resourceClassifiedAs (:resource-classified-as economicEvent)
-                                                 }
+                                                economicEvent
                                                 ))
-   :query/query-all-economic-events (fn [_ _ _] (let [allEvents (map #(clojure.set/rename-keys %
-                                                                                   {:has-point-in-time :hasPointInTime,
-                                                                                    :input-of :inputOf,
-                                                                                    :output-of :outputOf,
-                                                                                    :economic-event-id :economicEventId,
-                                                                                    :current-location :currentLocation,
-                                                                                    :resource-quantity-has-numerical-value :resourceQuantityHasNumericValue,
-                                                                                    :resource-quantity-has-unit :resourceQuantityHasUnit,
-                                                                                    :resource-inventoried-as :resourceInventoriedAs,
-                                                                                    :to-resource-inventoried-as :toResourceInventoriedAs,
-                                                                                    :resource-classified-as :resourceClassifiedAs})
-                                                                     (q/query-economic-event)
-                                                                     )]
+   :query/query-all-economic-events (fn [_ _ _] (let [allEvents
+                                                      (q/query-economic-event)
+                                                  ]
                                                   allEvents
                                                   ))
    :mutation/create-process (fn [_ args _] (let [{:keys [name processId before note]} (:process args)
                                                  params {:note note
                                                          :before before
-                                                         :process-id processId}
+                                                         :processId processId}
                                                  ]
                                              (m/create-process name params)
                                              ))
    :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs resourceConformsTo economicEventId]} (:event args)
                                                         params {:note note
-                                                                :economic-event-id economicEventId
-                                                                :has-point-in-time hasPointInTime
+                                                                :economicEventId economicEventId
+                                                                :hasPointInTime hasPointInTime
                                                                 :provider provider
                                                                 :receiver receiver
-                                                                :input-of inputOf
-                                                                :output-of outputOf
-                                                                :resource-inventoried-as resourceInventoriedAs
-                                                                :resource-conforms-to resourceConformsTo}
+                                                                :inputOf inputOf
+                                                                :outputOf outputOf
+                                                                :resourceInventoriedAs resourceInventoriedAs
+                                                                :resourceConformsTo resourceConformsTo}
                                                         ]
                                                     (m/create-economic-event action resourceQuantityHasNumericalValue resourceQuantityHasUnit params)))
    }

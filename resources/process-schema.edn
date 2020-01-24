@@ -7,8 +7,8 @@
                                                     :provider {:type Int}
                                                     :receiver {:type Int}
                                                     :action {:type String}
-                                                    :inputOf {:type Int}
-                                                    :outputOf {:type Int}
+                                                    :inputOf {:type String}
+                                                    :outputOf {:type String}
                                                     :economicEventId {:type String}
                                                     :resourceQuantityHasNumericalValue {:type Float}
                                                     :resourceQuantityHasUnit {:type String}
@@ -34,7 +34,7 @@
                                                                    :note {:type String}}}
            :Process {
                      :description "An activity that changes inputs into outputs. It could transform or transport economic resource(s)."
-                     :fields {:id {:type Int}
+                     :fields {
                               :name {:description "An informal or formal textual identifier for an item. Does not imply uniqueness."
                                      :type (non-null String)}
                               :processId {:type String}

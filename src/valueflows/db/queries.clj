@@ -17,7 +17,7 @@
 
 (ns valueflows.db.queries
   (:require [taoensso.timbre :as log]
-
+            [camel-snake-kebab.core :as csk] 
             [valueflows.stores :refer [stores]]
             [clj-storage.core :as store]
             )
@@ -28,14 +28,21 @@
 (defn query-process
   ([]
    (let [processes (store/query (:process-store stores) {})]
-     processes
+     (map #(let [inputs (store/query (:transaction-store stores) {:inputOf (:processId %)})
+                 outputs (store/query (:transaction-store stores) {:outputOf (:processId %)})
+                 ]
+             (assoc %
+                    :inputs inputs
+                    :outputs outputs)
+             )
+            processes)
      )
    )
   (
    [{:keys [process-id]}]
-   (let [process (store/query (:process-store stores) {:process-id process-id})
-         inputs (store/query (:transaction-store stores) {:input-of process-id})
-         outputs (store/query (:transaction-store stores) {:output-of process-id})
+   (let [process (store/query (:process-store stores) {:processId process-id})
+         inputs (store/query (:transaction-store stores) {:inputOf process-id})
+         outputs (store/query (:transaction-store stores) {:outputOf process-id})
          ]
      (if (empty? process)
        nil
@@ -54,8 +61,8 @@
 (defn query-economic-event
   ([]
    (let [allEvents (map #(assoc %
-                                :input-of (query-process {:process-id (:input-of %)})
-                                :output-of (query-process {:process-id (:output-of %)})
+                                :input-of (query-process {:processId (:inputOf %)})
+                                :output-of (query-process {:processId (:outputOf %)})
                                 ) (store/query (:transaction-store stores) {}))
          ]
      allEvents
@@ -65,12 +72,12 @@
   ([{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
    (let [economicEvent (-> (store/query (:transaction-store stores) param-map)
                            first)
-         inputProcess (query-process {:process-id input-of})
-         outputProcess (query-process {:process-id output-of})
+         inputProcess (query-process {:processId input-of})
+         outputProcess (query-process {:processId output-of})
          ]
      (assoc economicEvent
-            :input-of inputProcess
-            :output-of outputProcess
+            :inputOf inputProcess
+            :outputOf outputProcess
             )
      )
    )
