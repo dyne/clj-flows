@@ -21,9 +21,8 @@
             [fxc.core :as fxc]
             [clj-time.core :as t]
             [clj-storage.core :as storage]
-            [valueflows.stores :refer [stores]])
-  (:use java-time)
-  )
+            [valueflows.stores :refer [stores]]
+            [java-time :refer [format local-date]]))
 
 (def actions #{:offer :commit :transfer :use :consume :produce :work :exchange})
 
@@ -90,7 +89,7 @@
                 :resource-classified-as resource-classified-as
                 :resource-conforms-to resource-conforms-to
                 }]
-    (log/spy (storage/store! (:intent-store stores) :_id intent)))
+    (storage/store! (:intent-store stores) :_id intent))
     )
 
 
@@ -107,6 +106,6 @@
                  :processId (or (:processId params) (fxc.core/generate 32))
                  }
         ]
-    (log/spy (storage/store! (:process-store stores) :_id process))
+    (storage/store! (:process-store stores) :_id process)
     )
   )
