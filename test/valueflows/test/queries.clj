@@ -65,7 +65,19 @@
                                                              :toResourceInventoriedAs "Slim fit Jeans"
                                                              :currentLocation "52.372807,4.8981023"
                                                              :outputOf "produce-jeans-process"}))
-                           #_(fact "Test economic-event->process"
+                           (fact "Test list-all-resources"
+                                 (q/list-all-resources) => '({:currentLocation "52.372807,4.8981023"
+                                                              :name "Slim fit Jeans"
+                                                              :resourceId "Slim fit Jeans"
+                                                              :resourceQuantityHasNumericalValue 1
+                                                              :resourceQuantityHasUnit "each"}
+                                                             {:currentLocation "52.372807,4.8981023"
+                                                              :name "Lot 173 textile material"
+                                                              :resourceId "Lot 173 textile material"
+                                                              :resourceQuantityHasNumericalValue 190
+                                                              :resourceQuantityHasUnit "kilo"}))
+                           
+                           (fact "Test economic-event->process"
                                  (let [process-for-event (q/economic-event->process "sew-jeans")]
                                    (:processId process-for-event) => "produce-jeans-process"
                                    (count (:inputs process-for-event)) => 2
