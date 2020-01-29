@@ -83,128 +83,30 @@
                                    (count (:inputs process-for-event)) => 2
                                    (count (:outputs process-for-event)) => 1))
 
-                           #_(fact "Test process->input-economic-events"
-                                 (q/traceback-process "produce-jeans-process") => '({:action "consume"
-                                                                                     :currentLocation "52.372807,4.8981023"
-                                                                                     :economicEventId "consume-some-raw-material"
-                                                                                     :hasPointInTime "01/29"
-                                                                                     :inputOf "produce-jeans-process"
-                                                                                     :note ""
-                                                                                     :outputOf nil
-                                                                                     :provider nil
-                                                                                     :receiver "textile-lab"
-                                                                                     :resourceClassifiedAs []
-                                                                                     :resourceInventoriedAs "Lot 173 textile material"
-                                                                                     :resourceQuantityHasNumericalValue 10
-                                                                                     :resourceQuantityHasUnit "kilo"
-                                                                                     :satisfies nil
-                                                                                     :toResourceInventoriedAs nil}
-                                                                                    {:action "work"
-                                                                                     :currentLocation "52.372807,4.8981023"
-                                                                                     :economicEventId "sew-jeans"
-                                                                                     :hasPointInTime "01/29"
-                                                                                     :inputOf "produce-jeans-process"
-                                                                                     :note ""
-                                                                                     :outputOf nil
-                                                                                     :provider nil
-                                                                                     :receiver "textile-lab"
-                                                                                     :resourceClassifiedAs []
-                                                                                     :resourceInventoriedAs nil
-                                                                                     :resourceQuantityHasNumericalValue 8
-                                                                                     :resourceQuantityHasUnit "hour"
-                                                                                     :satisfies nil
-                                                                                     :toResourceInventoriedAs nil}))
-                           #_(fact "Test economic-resource->output-economic-events"
+                           (fact "Test process->input-economic-events"
+                                 (q/traceback-process "produce-jeans-process") => [{:action "consume"
+                                                                                    :economicEventId "consume-some-raw-material"
+                                                                                    :provider nil
+                                                                                    :receiver "textile-lab"
+                                                                                    :resourceQuantityHasNumericalValue 10
+                                                                                    :resourceQuantityHasUnit "kilo"}
+                                                                                   {:action "work"
+                                                                                    :economicEventId "sew-jeans"
+                                                                                    :provider nil
+                                                                                    :receiver "textile-lab"
+                                                                                    :resourceQuantityHasNumericalValue 8
+                                                                                    :resourceQuantityHasUnit "hour"}])
+                           (fact "Test economic-resource->output-economic-events"
                                  (q/traceback-economic-resource "Lot 173 textile material")
                                  => {:action "transfer"
-                                     :currentLocation "52.372807,4.8981023"
                                      :economicEventId "raw-material-transfer"
-                                     :hasPointInTime "01/29"
-                                     :inputOf {:before nil
-                                               :hasPointInTime "01/29"
-                                               :inputs '({:action "transfer"
-                                                          :currentLocation "52.372807,4.8981023"
-                                                          :economicEventId "raw-material-transfer"
-                                                          :hasPointInTime "01/29"
-                                                          :inputOf "raw-material-process"
-                                                          :note ""
-                                                          :outputOf nil
-                                                          :provider nil
-                                                          :receiver "textile-lab"
-                                                          :resourceClassifiedAs ["red" "cotton"]
-                                                          :resourceInventoriedAs "Red cotton textile"
-                                                          :resourceQuantityHasNumericalValue 200
-                                                          :resourceQuantityHasUnit "kilo"
-                                                          :satisfies nil
-                                                          :toResourceInventoriedAs "Lot 173 textile material"})
-                                               :name "Recover raw material to create the jeans"
-                                               :note ""
-                                               :outputs '()
-                                               :processId "raw-material-process"}
-                                     :note ""
-                                     :outputOf nil
                                      :provider nil
                                      :receiver "textile-lab"
-                                     :resourceClassifiedAs ["red" "cotton"]
-                                     :resourceInventoriedAs "Red cotton textile"
                                      :resourceQuantityHasNumericalValue 200
-                                     :resourceQuantityHasUnit "kilo"
-                                     :satisfies nil
-                                     :toResourceInventoriedAs "Lot 173 textile material"})
+                                     :resourceQuantityHasUnit "kilo"})
 
-                           #_(fact "Test traceback-economic-event"
-                                 (q/traceback-economic-event "produce-jeans")
-                                 => {:before nil
-                                     :hasPointInTime "01/29"
-                                     :inputs '({:action "consume"
-                                               :currentLocation "52.372807,4.8981023"
-                                               :economicEventId "consume-some-raw-material"
-                                               :hasPointInTime "01/29"
-                                               :inputOf "produce-jeans-process"
-                                               :note ""
-                                               :outputOf nil
-                                               :provider nil
-                                               :receiver "textile-lab"
-                                               :resourceClassifiedAs []
-                                               :resourceInventoriedAs "Lot 173 textile material"
-                                               :resourceQuantityHasNumericalValue 10
-                                               :resourceQuantityHasUnit "kilo"
-                                               :satisfies nil
-                                               :toResourceInventoriedAs nil}
-                                              {:action "work"
-                                               :currentLocation "52.372807,4.8981023"
-                                               :economicEventId "sew-jeans"
-                                               :hasPointInTime "01/29"
-                                               :inputOf "produce-jeans-process"
-                                               :note ""
-                                               :outputOf nil
-                                               :provider nil
-                                               :receiver "textile-lab"
-                                               :resourceClassifiedAs []
-                                               :resourceInventoriedAs nil
-                                               :resourceQuantityHasNumericalValue 8
-                                               :resourceQuantityHasUnit "hour"
-                                               :satisfies nil
-                                               :toResourceInventoriedAs nil})
-                                     :name "Produce jeans using raw material"
-                                     :note ""
-                                     :outputs '({:action "produce"
-                                                :currentLocation "52.372807,4.8981023"
-                                                :economicEventId "produce-jeans"
-                                                :hasPointInTime "01/29"
-                                                :inputOf nil
-                                                :note ""
-                                                :outputOf "produce-jeans-process"
-                                                :provider nil
-                                                :receiver "textile-lab"
-                                                :resourceClassifiedAs []
-                                                :resourceInventoriedAs nil
-                                                :resourceQuantityHasNumericalValue 1
-                                                :resourceQuantityHasUnit "each"
-                                                :satisfies nil
-                                                :toResourceInventoriedAs "Slim fit Jeans"})
-                                     :processId "produce-jeans-process"}
-
+                           (fact "Test traceback-economic-event"
+                                 (q/traceback-economic-event "produce-jeans") => {:name "Produce jeans using raw material" :processId "produce-jeans-process"}
                                  (q/traceback-economic-event "raw-material-transfer") => "Red cotton textile"))
 
                     ;; economic-event: "Action hasPointInTime Provider Reveiver ResourceQuantityAsNumericalValue ResourceQuantityAsUnit"
@@ -241,8 +143,8 @@
                                          :resourceQuantityHasUnit "hour"}]
                                        ;; TODO: resource or event or both
                                        #_{:action :transfer
-                                        ;; TODO:add hasPointInTime
-                                        :provider nil
-                                        :reveiver "textile-lab"
-                                        :resourceQuantityAsNumericalValue 10
-                                         :resourceQuantityAsUnit :kilo}]))))
+                                          ;; TODO:add hasPointInTime
+                                          :provider nil
+                                          :reveiver "textile-lab"
+                                          :resourceQuantityAsNumericalValue 10
+                                          :resourceQuantityAsUnit :kilo}]))))
