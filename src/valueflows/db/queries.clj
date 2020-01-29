@@ -47,7 +47,7 @@
          inputs (store/query (:transaction-store stores) {:inputOf processId})
          outputs (store/query (:transaction-store stores) {:outputOf processId})
          ]
-     (log/spy processId)
+     processId
      (if (empty? process)
        nil
        (assoc (-> process
@@ -72,13 +72,13 @@
 
      )
    )
-  ([{:keys [economicEventId before after provider receiver action inputOf outputOf resource-inventory-as resource-conforms-to] :as param-map}]
+  ([{:keys [economicEventId before after provider receiver action inputOf outputOf resourceInventoryAs resourceConformsTo toResourceInventoriedAs] :as param-map}]
    (let [economicEvent (-> (store/query (:transaction-store stores) param-map)
                            first)
          inputProcess (query-process {:processId (:inputOf economicEvent)})
-         outputProcess (query-process {:processid (:outputOf economicEvent)})
+         outputProcess (query-process {:processId (:outputOf economicEvent)})
          ]
-     (assoc (log/spy economicEvent)
+     (assoc economicEvent
             :inputOf inputProcess
             :outputOf outputProcess
             )
@@ -117,8 +117,7 @@
        :name name
        :currentLocation (-> resource
                             last
-                            :currentLocation)
-       }
+                            :currentLocation)}
       )
     ))
 
@@ -131,17 +130,32 @@
 
 (defn economic-event->process [economic-event-id]
   (let [economic-event (query-economic-event {:economicEventId economic-event-id})
-        input-process (:inputOf (log/spy economic-event))
+        input-process (:inputOf economic-event)
         output-process (:outputOf economic-event)]
     (if (and input-process output-process)
       (throw (Exception. "An event cannot be both an input and output of a process."))
       (or input-process output-process))))
 
 
-(defn process->input-economic-events [process-id]
-  (-> {:processId process-id}
-      query-process
-      :inputs))
+;; The below functions are taken from https://valueflo.ws/appendix/track.html (before=traceback)
+(defn traceback-process [process-id]
+  (:inputs (query-process {:processId process-id})))
+
+;; TODO: check if always enough
+(defn traceback-economic-resource [resource-name]
+  (query-economic-event {:toResourceInventoriedAs resource-name}))
+
+(defn traceback-economic-event
+  [economic-event-id]
+  "One level traceback"
+  (let [economic-event (query-economic-event {:economicEventId economic-event-id})]
+    (if (:outputOf economic-event)
+      (:outputOf economic-event)
+      (if (:inputOf economic-event)
+        (:resourceInventoriedAs economic-event)
+        (if (= (:action economic-event) "transfer")
+          (:resourceInventoriedAs economic-event)
+          nil)))))
 
 ;; track-resource [name]
 ;; [{EconomicEvent}{Process}[{EconomicEvent}]]
