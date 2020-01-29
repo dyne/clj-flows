@@ -157,11 +157,11 @@
                                                                                 :resourceInventoriedAs "hyper jeans"})
 
                                    ;; Check if the process includes all the inputs
-                                   (count (:inputs (select-keys (q/query-process {:processId "process-test-1"}) [:inputs])))
-                                   => (q/query-process {:processId "process-test-1"})
+                                   (count (:inputs (q/query-process {:processId "process-test-1"})))
+                                   => 3
 
                                    ;; Check if the process includes all the outpts
-                                   (count (:outputs (select-keys (q/query-process {:processId "process-test-1"}) [:outputs])))
+                                   (count (:outputs (q/query-process {:processId "process-test-1"})))
                                    => 1
                                    )
 
