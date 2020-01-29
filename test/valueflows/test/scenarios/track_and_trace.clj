@@ -56,30 +56,29 @@
                            (fact "An unknown agent transfer some textile material to Waste Management"
                                  (mut/create-economic-event :transfer 200 :kilo {
                                                                                  :receiver :waste-management
-                                                                                 :economic-event-id "test-1"
-                                                             :to-resource-inventoried-as "Lot 173 textile material"
-                                                             :current-location "52.372807,4.8981023"
-                                                             :resource-classified-as [:red :cotton]})
+                                                                                 :economicEventId "test-1"
+                                                             :toResourceInventoriedAs "Lot 173 textile material"
+                                                             :currentLocation "52.372807,4.8981023"
+                                                             :resourceClassifiedAs [:red :cotton]})
                                  (mut/create-economic-event :transfer 200 :kilo {
                                                              :receiver :waste-management
-                                                             :to-resource-inventoried-as "Lot 173 textile material"
-                                                             :current-location "52.372807,4.8981023"
-                                                             :resource-classified-as [:red :cotton]})
+                                                             :toResourceInventoriedAs "Lot 173 textile material"
+                                                             :currentLocation "52.372807,4.8981023"
+                                                             :resourceClassifiedAs [:red :cotton]})
                                  (mut/create-economic-event :transfer 100 :kilo {
                                                              :provider :waste-management
                                                              :receiver :textile-lab
-                                                             :resource-inventoried-as "Lot 173 textile material"
-                                                             :to-resource-inventoried-as "Processed textile"
-                                                             :current-location "52.372807,4.8981023"
-                                                             :resource-classified-as [:red :cotton]})
+                                                             :resourceInventoriedAs "Lot 173 textile material"
+                                                             :toResourceInventoriedAs "Processed textile"
+                                                             :currentLocation "52.372807,4.8981023"
+                                                             :resourceClassifiedAs [:red :cotton]})
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
-                                     :resource-quantity-has-numerical-value
+                                     :resourceQuantityHasNumericalValue
                                      ) => 300
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
-                                     :current-location) => "52.372807,4.8981023"
-                                 (-> (q/query-economic-event {:economic-event-id "test-1"})
-                                     first
-                                     :to-resource-inventoried-as) =>  "Lot 173 textile material"
+                                     :currentLocation) => "52.372807,4.8981023"
+                                 (-> (q/query-economic-event {:economicEventId "test-1"})
+                                     :toResourceInventoriedAs) =>  "Lot 173 textile material"
                                  )
 
                            (fact "Waste Management broadcasts an offer to transfer Lot 173 textile material"
@@ -95,25 +94,27 @@
 
                            (fact "Waste Management transfers part of Lot 173 to Textile Lab"
                                  (mut/create-economic-event :transfer 15 :kilo {
+                                                                                :economicEventId "test-2"
                                                                                 :provider :waste-management
                                                                                 :receiver :textile-lab
                                                                                 :satisfies 2
-                                                                                :resource-inventoried-as "Lot 173 textile material"
-                                                                                :to-resource-inventoried-as "Raw red cotton"
-                                                                                :current-location "52.372807,4.8981023"
-                                                                                :resource-classified-as [:red :cotton]})
-                                 (-> (q/query-economic-event {:receiver "textile-lab"})
-                                     last
-                                     :to-resource-inventoried-as) => "Raw red cotton"
+                                                                                :resourceInventoriedAs "Lot 173 textile material"
+
+                                                                                :toResourceInventoriedAs "Raw red cotton"
+                                                                                :currentLocation "52.372807,4.8981023"
+                                                                                :resourceClassifiedAs [:red :cotton]})
+                                 (-> (q/query-economic-event {:economicEventId "test-2"})
+                                     :toResourceInventoriedAs) => "Raw red cotton"
                                  (-> (q/query-resource {:name "Raw red cotton"})
-                                     :resource-quantity-has-numerical-value
+                                     :resourceQuantityHasNumericalValue
                                      ) => 15
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
-                                     :resource-quantity-has-numerical-value) => 285)
+                                     :resourceQuantityHasNumericalValue) => 285)
 
                            (fact "Textile Lab creates a new process to produce a new pair of jeans"
                                  (mut/create-process "Create a new pair of hyper jeans"
                                                      {:note "Hyper jeans will be produced using the hyperballad design"
+                                                      :processId "process-test-1"
                                                       :before (time/now)})
                                  (-> (q/query-process)
                                      last
@@ -124,43 +125,43 @@
                            (fact "A bunch of work is done over the process: citing a design, consuming some materials and manufacturing the jeans, at the end the hyper jeans is produced and put in the inventory"
                                  (let [process-id (-> (q/query-process)
                                                       last
-                                                      :process-id)]
+                                                      :processId)]
                                    (mut/create-economic-event
                                     :cite 1 :each
                                     {
                                      :provider :worker
                                      :receiver :textile-lab
-                                     :input-of process-id
-                                     :resource-inventoried-as "hyperballad design"})
+                                     :inputOf "process-test-1"
+                                     :resourceInventoriedAs "hyperballad design"})
 
                                    (mut/create-economic-event :consume 10 :kilo {
                                                                                  :provider :worker
                                                                                  :receiver :textile-lab
-                                                                                 :input-of process-id
-                                                                                 :resource-inventoried-as "Raw red cotton"
+                                                                                 :inputOf "process-test-1"
+                                                                                 :resourceInventoriedAs "Raw red cotton"
                                                                                  })
 
                                    (mut/create-economic-event :work 4 :hour {
                                                                              :provider :worker
-                                                                             :receiver :textile-lab                                                           :has-point-in-time (time/now)
-                                                                             :input-of process-id
-                                                                             :resource-conforms-to "clothes manufacturing"
+                                                                             :receiver :textile-lab                                                           :hasPointInTime (time/now)
+                                                                             :inputOf "process-test-1"
+                                                                             :resourceConformsTo "clothes manufacturing"
                                                                              :note "Done all the work!"})
 
                                    (mut/create-economic-event :produce 1 :each {
                                                                                 :provider :textile-lab
                                                                                 :receiver :textile-lab
-                                                                                :output-of process-id
-                                                                                :current-location "TextileLab place"
-                                                                                :resource-classified-as [:red :jeans :cotton :slim-fit]
-                                                                                :resource-inventoried-as "hyper jeans"})
+                                                                                :outputOf "process-test-1"
+                                                                                :currentLocation "TextileLab place"
+                                                                                :resourceClassifiedAs [:red :jeans :cotton :slim-fit]
+                                                                                :resourceInventoriedAs "hyper jeans"})
 
                                    ;; Check if the process includes all the inputs
-                                   (count (:inputs (select-keys (q/query-process {:process-id process-id}) [:inputs])))
-                                   => 3
+                                   (count (:inputs (select-keys (q/query-process {:processId "process-test-1"}) [:inputs])))
+                                   => (q/query-process {:processId "process-test-1"})
 
                                    ;; Check if the process includes all the outpts
-                                   (count (:outputs (select-keys (q/query-process {:process-id process-id}) [:outputs])))
+                                   (count (:outputs (select-keys (q/query-process {:processId "process-test-1"}) [:outputs])))
                                    => 1
                                    )
 

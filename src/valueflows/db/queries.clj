@@ -69,7 +69,7 @@
 
      )
    )
-  ([{:keys [before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
+  ([{:keys [economic-event-id before after provider receiver action input-of output-of resource-inventory-as resource-conforms-to] :as param-map}]
    (let [economicEvent (-> (store/query (:transaction-store stores) param-map)
                            first)
          inputProcess (query-process {:processId input-of})
