@@ -35,11 +35,9 @@
 
                     (facts "Create some processes and events and test query functions"
                            (fact "First insert some economic events and processess"
-                                 (mut/create-process "Recover raw material to create the jeans" {:processId "raw-material-process"})
 
                                  (mut/create-economic-event :transfer 200 :kilo
                                                             {:economicEventId "raw-material-transfer"
-                                                             :inputOf "raw-material-process"
                                                              :receiver "textile-lab"
                                                              :toResourceInventoriedAs "Lot 173 textile material"
                                                              :currentLocation "52.372807,4.8981023"
@@ -48,6 +46,13 @@
                                  (mut/create-process "Produce jeans using raw material" {:processId "produce-jeans-process"})
                                  (mut/create-economic-event :consume 10 :kilo
                                                             {:economicEventId "consume-some-raw-material"
+                                                             :receiver "textile-lab"
+                                                             :resourceInventoriedAs "Lot 173 textile material"
+                                                             :currentLocation "52.372807,4.8981023"
+                                                             :inputOf "produce-jeans-process"
+                                                             })
+                                 (mut/create-economic-event :use 10 :kilo
+                                                            {:economicEventId "consume-some-raw-material-2"
                                                              :receiver "textile-lab"
                                                              :resourceInventoriedAs "Lot 173 textile material"
                                                              :currentLocation "52.372807,4.8981023"
@@ -62,11 +67,16 @@
                                  (mut/create-economic-event :produce 1 :each
                                                             {:economicEventId "produce-jeans"
                                                              :receiver "textile-lab"
-                                                             :toResourceInventoriedAs "Slim fit Jeans"
+                                                             :resourceInventoriedAs "Slim fit Jeans"
                                                              :currentLocation "52.372807,4.8981023"
                                                              :outputOf "produce-jeans-process"}))
                            (fact "Test list-all-resources"
                                  (q/list-all-resources) => '({:currentLocation "52.372807,4.8981023"
+                                                              :name "Red cotton textile"
+                                                              :resourceId "Red cotton textile"
+                                                              :resourceQuantityHasNumericalValue -200
+                                                              :resourceQuantityHasUnit "kilo"}
+                                                             {:currentLocation "52.372807,4.8981023"
                                                               :name "Slim fit Jeans"
                                                               :resourceId "Slim fit Jeans"
                                                               :resourceQuantityHasNumericalValue 1
@@ -74,14 +84,24 @@
                                                              {:currentLocation "52.372807,4.8981023"
                                                               :name "Lot 173 textile material"
                                                               :resourceId "Lot 173 textile material"
-                                                              :resourceQuantityHasNumericalValue 190
+                                                              :resourceQuantityHasNumericalValue 180
                                                               :resourceQuantityHasUnit "kilo"}))
                            
                            (fact "Test economic-event->process"
                                  (let [process-for-event (q/economic-event->process "sew-jeans")]
                                    (:processId process-for-event) => "produce-jeans-process"
-                                   (count (:inputs process-for-event)) => 2
+                                   (count (:inputs process-for-event)) => 3
                                    (count (:outputs process-for-event)) => 1))
+
+                           (fact "test query resource"
+                                 (q/query-resource {:name "Red cotton textile"}) => {:currentLocation "52.372807,4.8981023"
+                                                                                     :name "Red cotton textile"
+                                                                                     :resourceId "Red cotton textile"
+                                                                                     :resourceQuantityHasNumericalValue -200
+                                                                                     :resourceQuantityHasUnit "kilo"}
+
+                                 
+                                 )
 
                            (fact "Test process->input-economic-events"
                                  (q/traceback-process "produce-jeans-process") => [{:action "consume"
@@ -90,6 +110,13 @@
                                                                                     :receiver "textile-lab"
                                                                                     :resourceQuantityHasNumericalValue 10
                                                                                     :resourceQuantityHasUnit "kilo"}
+                                                                                   {:action "use"
+                                                                                    :economicEventId "consume-some-raw-material-2"
+                                                                                    :provider nil
+                                                                                    :receiver "textile-lab"
+                                                                                    :resourceQuantityHasNumericalValue 10
+                                                                                    :resourceQuantityHasUnit "kilo"}
+
                                                                                    {:action "work"
                                                                                     :economicEventId "sew-jeans"
                                                                                     :provider nil
@@ -107,7 +134,12 @@
 
                            (fact "Test traceback-economic-event"
                                  (q/traceback-economic-event "produce-jeans") => {:name "Produce jeans using raw material" :processId "produce-jeans-process"}
-                                 (q/traceback-economic-event "raw-material-transfer") => "Red cotton textile"))
+                                 (q/traceback-economic-event "raw-material-transfer") => {
+                                                                                          :name "Red cotton textile"
+                                                                                          :resourceId "Red cotton textile"
+                                                                                          :resourceQuantityHasNumericalValue -200
+                                                                                          :resourceQuantityHasUnit "kilo"}
+))
 
                     ;; economic-event: "Action hasPointInTime Provider Reveiver ResourceQuantityAsNumericalValue ResourceQuantityAsUnit"
                     ;; process: "Name"
@@ -135,6 +167,12 @@
                                          :receiver "textile-lab"
                                          :resourceQuantityHasNumericalValue 10
                                          :resourceQuantityHasUnit "kilo"}
+                                        {:action "use"
+                                         :economicEventId "consume-some-raw-material-2"
+                                         :provider nil
+                                         :receiver "textile-lab"
+                                         :resourceQuantityHasNumericalValue 10
+                                         :resourceQuantityHasUnit "kilo"}
                                         {:action "work"
                                          :economicEventId "sew-jeans"
                                          :provider nil
@@ -148,3 +186,4 @@
                                           :reveiver "textile-lab"
                                           :resourceQuantityAsNumericalValue 10
                                           :resourceQuantityAsUnit :kilo}]))))
+;; => false

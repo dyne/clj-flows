@@ -70,7 +70,7 @@
    )
   ([{:keys [economicEventId before after provider receiver action inputOf outputOf resourceInventoryAs resourceConformsTo toResourceInventoriedAs] :as param-map}]
    (let [economicEvent (-> (store/query (:transaction-store stores) param-map)
-                           first)
+                           last)
          inputProcess (query-process {:processId (:inputOf economicEvent)})
          outputProcess (query-process {:processId (:outputOf economicEvent)})
          ]
@@ -90,23 +90,37 @@
   [{:keys [name]}]
   "This function returns information of a given resource if it exists and nil otherwise"
   (when name
-    (let [resource (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
-          received (store/aggregate (:transaction-store stores) [{"$match" {:toResourceInventoriedAs name}}
+    (let [resource (store/query (:transaction-store stores) {:resourceInventoriedAs name})
+          toResource (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
+          transferred (store/aggregate (:transaction-store stores) [{"$match" {:toResourceInventoriedAs name}}
                                                                  {"$group" {:_id "$receiver"
                                                                             :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
           provided (store/aggregate (:transaction-store stores) [{"$match" {:resourceInventoriedAs name}}
                                                                  {"$group" {:_id "$provider"
-                                                                            :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])]
+                                                                            :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
+          resources (distinct (into resource toResource))
+          ]
+      (when-not (empty? resources)
+        {:resourceQuantityHasNumericalValue  (if (some #(= (:action %) "transfer") resources)
+                                               (- (if (empty? transferred)
+                                                    0
+                                                    (int (:resourceQuantityHasNumericalValue (first transferred)))
+                                                    )
+                                                  (if (empty? provided)
+                                                    0
+                                                    (int (:resourceQuantityHasNumericalValue (first provided)))
+                                                    ))
+                                               (- (if (empty? provided)
+                                                    0
+                                                    (int (:resourceQuantityHasNumericalValue (first provided)))
+                                                    )
+                                                  (if (empty? transferred)
+                                                    0
+                                                    (int (:resourceQuantityHasNumericalValue (first transferred)))
+                                                    ))
+                                               )
 
-      (when-not (empty? resource)
-        {:resourceQuantityHasNumericalValue (- (if (empty? received)
-                                                 0
-                                                 (:resourceQuantityHasNumericalValue (first received))
-                                                 )
-                                               (if (empty? provided)
-                                                 0
-                                                 (int (:resourceQuantityHasNumericalValue (first provided)))
-                                                 ))
+         
          :resourceQuantityHasUnit (-> resource
                                       last
                                       :resourceQuantityHasUnit)
@@ -158,31 +172,55 @@
 (defn traceback-economic-resource
   [resource-name]
   "Only one step back"
-  (dissoc (query-economic-event {:toResourceInventoriedAs resource-name})
-          :hasPointInTime
-          :inputOf
-          :outputOf
-          :note
-          :currentLocation
-          :satisfies 
-          :toResourceInventoriedAs
-          :resourceClassifiedAs
-          :resourceInventoriedAs))
+  (let [resource (store/query (:transaction-store stores) {:resourceInventoriedAs resource-name})
+        toResource (store/query (:transaction-store stores) {:toResourceInventoriedAs resource-name})
+        resources (distinct (into resource toResource))
+        ]
+    (mapv #(select-keys % [:action 
+                           :economicEventId 
+                           :provider
+                           :receiver
+                           :resourceQuantityHasNumericalValue
+                           :resourceQuantityHasUnit
+                           ]) resources
+          #_(dissoc (query-economic-event {:resourceInventoriedAs resource-name})
+            :hasPointInTime
+            :inputOf
+            :outputOf
+            :note
+            :currentLocation
+            :satisfies 
+            :toResourceInventoriedAs
+            :resourceClassifiedAs
+            :resourceInventoriedAs))
+
+    ))
 
 (defn traceback-economic-event
   [economic-event-id]
   "One level traceback"
   (let [economic-event (query-economic-event {:economicEventId economic-event-id})]
-    (if (:outputOf economic-event)
+    (if (some? (:outputOf economic-event))
       ;; this is a process
+      
       (select-keys (:outputOf economic-event)
                    [:name :processId])
       ;; this is a resource
-      (if (:inputOf economic-event)
-        (:resourceInventoriedAs economic-event)
+      (if (some? (:inputOf economic-event))
+        (select-keys (query-resource {:name (:resourceInventoriedAs economic-event)})
+                     [:name 
+                      :resourceQuantityHasNumericalValue
+                      :resourceQuantityHasUnit
+                      :resourceId]
+                     )
         ;; this is a resource
         (if (= (:action economic-event) "transfer")
-          (:resourceInventoriedAs economic-event)
+          (select-keys (query-resource {:name (:resourceInventoriedAs economic-event)})
+                       [:name 
+                        :resourceQuantityHasNumericalValue
+                        :resourceQuantityHasUnit
+                        :resourceId]
+                       )
           nil)))))
 
 (defn trace-resource
@@ -195,10 +233,10 @@
             result (atom nil)]
         (when leaf
           (cond
-            (not-nil? (:processId leaf)) (reset! result (traceback-process (:processId leaf)))
+            (not-nil? (:processId leaf)) (reset! result (mapv #(traceback-process (:processId %)) leaf) )
             (not-nil? (:economicEventId leaf)) (reset! result (traceback-economic-event (:economicEventId leaf)))
             (not-nil? (:resourceId leaf)) (reset! result (traceback-economic-resource (:name leaf)))
-            (seq? leaf) (reset! result (mapv #(traceback-economic-event (:economicEventId %)) leaf))
+            (some? leaf) (reset! result (mapv #(traceback-economic-event (:economicEventId %)) leaf))
             :else nil)
           (if @result 
             (recur (conj trace-tree @result))
