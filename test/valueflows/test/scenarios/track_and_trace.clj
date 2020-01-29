@@ -49,10 +49,16 @@
                         ; - Create economic events that affect resources
                         ; - Create Process to group a bunch of economic events related each other
                     ; Some implementations of the scenario are:
-                        ; - Show where resources are located on a map
-                        ; - Track all the resource flow
+                           ;; - Show where resources are located on a map
+                           ;; + list-all-resources
+                           ;; Give roles to different people for different orgs
+                           ;; As they create events the map is updated (Transfer resources)
+                           ;; In a separate page if one of the actors selects create qrcode then the track is created (Track all the resource flow)
+                           ;; + tracing
+                           
+                        
                         ; - Broadcast available resources on the network
-                        ; - Transfer resources
+                        ; + intent
                            (fact "An unknown agent transfer some textile material to Waste Management"
                                  (mut/create-economic-event :transfer 200 :kilo {
                                                                                  :receiver :waste-management
@@ -168,6 +174,7 @@
 
                                  )
 
-))
-;; => true
+                           )
+                    ;; => true
 
+                    )

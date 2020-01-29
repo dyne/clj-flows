@@ -61,7 +61,7 @@
 
                         }
         ]
-    (log/spy (storage/store! (:transaction-store stores) :_id economic-event))
+    (storage/store! (:transaction-store stores) :_id economic-event)
     )
   )
 

@@ -43,22 +43,18 @@
    )
   (
    [{:keys [processId]}]
-   (let [process (store/query (:process-store stores) {:processId processId})
-         inputs (store/query (:transaction-store stores) {:inputOf processId})
-         outputs (store/query (:transaction-store stores) {:outputOf processId})
-         ]
-     processId
-     (if (empty? process)
-       nil
-       (assoc (-> process
-                  first)
-              :inputs inputs
-              :outputs outputs
-              )
-       )
-     ))
-
-  )
+   (when processId
+     (let [process (store/query (:process-store stores) {:processId processId})
+           inputs (store/query (:transaction-store stores) {:inputOf processId})
+           outputs (store/query (:transaction-store stores) {:outputOf processId})]
+       processId
+       (if (empty? process)
+         nil
+         (assoc (-> process
+                    first)
+                :inputs inputs
+                :outputs outputs
+                ))))))
 
 (defn query-economic-event
   "This will return all eonomic events if no parameters are passed or will filter economic events by some criteria"
@@ -115,6 +111,7 @@
                                     last
                                     :resourceQuantityHasUnit)
        :name name
+       :resourceId name
        :currentLocation (-> resource
                             last
                             :currentLocation)}
@@ -138,24 +135,64 @@
 
 
 ;; The below functions are taken from https://valueflo.ws/appendix/track.html (before=traceback)
-(defn traceback-process [process-id]
-  (:inputs (query-process {:processId process-id})))
+(defn traceback-process
+  [process-id]
+  "Only one step back"
+  (let [inputs (:inputs (query-process {:processId process-id}))]
+    (mapv #(select-keys % [:action :economicEventId :provider :resourceQuantityHasNumericalValue :resourceQuantityHasUnit :receiver]) inputs)))
 
 ;; TODO: check if always enough
-(defn traceback-economic-resource [resource-name]
-  (query-economic-event {:toResourceInventoriedAs resource-name}))
+(defn traceback-economic-resource
+  [resource-name]
+  "Only one step back"
+  (dissoc (query-economic-event {:toResourceInventoriedAs resource-name})
+          :hasPointInTime
+          :inputOf
+          :outputOf
+          :note
+          :currentLocation
+          :satisfies 
+          :toResourceInventoriedAs
+          :resourceClassifiedAs
+          :resourceInventoriedAs))
 
 (defn traceback-economic-event
   [economic-event-id]
   "One level traceback"
   (let [economic-event (query-economic-event {:economicEventId economic-event-id})]
     (if (:outputOf economic-event)
-      (:outputOf economic-event)
+      ;; this is a process
+      (select-keys (:outputOf economic-event)
+                   [:name :processId])
+      ;; this is a resource
       (if (:inputOf economic-event)
         (:resourceInventoriedAs economic-event)
+        ;; this is a resource
         (if (= (:action economic-event) "transfer")
           (:resourceInventoriedAs economic-event)
           nil)))))
+
+(def not-nil? (complement nil?))
+
+(defn trace-resource
+  [resource-name]
+  "Given a resource name the whole backtrace tree is returned or nil if the resource doesnt exist"
+  (let [economic-resource (dissoc (query-resource {:name resource-name})
+                                  :currentLocation)]
+    (loop [trace-tree [economic-resource]]
+      (let [leaf (last trace-tree)
+            result (atom nil)]
+        (when leaf
+          (cond
+            (not-nil? (:processId leaf)) (reset! result (traceback-process (:processId leaf)))
+            (not-nil? (:economicEventId leaf)) (reset! result (traceback-economic-event (:economicEventId leaf)))
+            (not-nil? (:resourceId leaf)) (reset! result (traceback-economic-resource (:name leaf)))
+            (seq? leaf) (reset! result (mapv #(traceback-economic-event (:economicEventId %)) leaf))
+            :else nil)
+          (if @result 
+            (recur (conj trace-tree @result))
+            trace-tree))))))
+
 
 ;; track-resource [name]
 ;; [{EconomicEvent}{Process}[{EconomicEvent}]]
