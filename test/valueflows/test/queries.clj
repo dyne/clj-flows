@@ -51,7 +51,7 @@
                                                              :currentLocation "52.372807,4.8981023"
                                                              :inputOf "produce-jeans-process"
                                                              })
-                                 (mut/create-economic-event :use 10 :kilo
+                                 (mut/create-economic-event :consume 10 :kilo
                                                             {:economicEventId "consume-some-raw-material-2"
                                                              :receiver "textile-lab"
                                                              :resourceInventoriedAs "Lot 173 textile material"
@@ -86,7 +86,6 @@
                                                               :resourceId "Lot 173 textile material"
                                                               :resourceQuantityHasNumericalValue 180
                                                               :resourceQuantityHasUnit "kilo"}))
-                           
                            (fact "Test economic-event->process"
                                  (let [process-for-event (q/economic-event->process "sew-jeans")]
                                    (:processId process-for-event) => "produce-jeans-process"
@@ -100,17 +99,16 @@
                                                                                      :resourceQuantityHasNumericalValue -200
                                                                                      :resourceQuantityHasUnit "kilo"}
 
-                                 
                                  )
 
-                           (fact "Test process->input-economic-events"
+                           #_(fact "Test process->input-economic-events"
                                  (q/traceback-process "produce-jeans-process") => [{:action "consume"
                                                                                     :economicEventId "consume-some-raw-material"
                                                                                     :provider nil
                                                                                     :receiver "textile-lab"
                                                                                     :resourceQuantityHasNumericalValue 10
                                                                                     :resourceQuantityHasUnit "kilo"}
-                                                                                   {:action "use"
+                                                                                   {:action "consume"
                                                                                     :economicEventId "consume-some-raw-material-2"
                                                                                     :provider nil
                                                                                     :receiver "textile-lab"
@@ -123,16 +121,16 @@
                                                                                     :receiver "textile-lab"
                                                                                     :resourceQuantityHasNumericalValue 8
                                                                                     :resourceQuantityHasUnit "hour"}])
-                           (fact "Test economic-resource->output-economic-events"
-                                 (q/traceback-economic-resource "Lot 173 textile material")
-                                 => {:action "transfer"
+                           #_(fact "Test economic-resource->output-economic-events"
+                                 (q/traceback-economic-resource "Red cotton textile")
+                                 => [{:action "transfer"
                                      :economicEventId "raw-material-transfer"
                                      :provider nil
                                      :receiver "textile-lab"
                                      :resourceQuantityHasNumericalValue 200
-                                     :resourceQuantityHasUnit "kilo"})
+                                     :resourceQuantityHasUnit "kilo"}])
 
-                           (fact "Test traceback-economic-event"
+                           #_(fact "Test traceback-economic-event"
                                  (q/traceback-economic-event "produce-jeans") => {:name "Produce jeans using raw material" :processId "produce-jeans-process"}
                                  (q/traceback-economic-event "raw-material-transfer") => {
                                                                                           :name "Red cotton textile"
@@ -141,49 +139,92 @@
                                                                                           :resourceQuantityHasUnit "kilo"}
 ))
 
-                    ;; economic-event: "Action hasPointInTime Provider Reveiver ResourceQuantityAsNumericalValue ResourceQuantityAsUnit"
-                    ;; process: "Name"
-                    ;; resource: "Name ResourceQuantityAsNumericalValue ResourceQuantityAsUnit"
-                    (facts "Trace scenario"
+                    #_(facts "Trace scenario"
                            (fact "Given a resource name the whole backtrace tree is returned"
                                  (let [resource-name "Slim fit Jeans"]
                                    (q/trace-resource resource-name)
-                                   => [{:name "Slim fit Jeans"
-                                        :resourceQuantityHasNumericalValue 1
-                                        :resourceQuantityHasUnit "each"
-                                        :resourceId "Slim fit Jeans"}
-                                       {:action "produce"
-                                        ;; TODO:add hasPointInTime
-                                        :provider nil
-                                        :receiver "textile-lab"
-                                        :resourceQuantityHasNumericalValue 1
-                                        :resourceQuantityHasUnit "each"
-                                        :economicEventId "produce-jeans"}
-                                       {:name "Produce jeans using raw material"
-                                        :processId "produce-jeans-process"}
-                                       [{:action "consume"
-                                         :economicEventId "consume-some-raw-material"
-                                         :provider nil
-                                         :receiver "textile-lab"
-                                         :resourceQuantityHasNumericalValue 10
-                                         :resourceQuantityHasUnit "kilo"}
-                                        {:action "use"
-                                         :economicEventId "consume-some-raw-material-2"
-                                         :provider nil
-                                         :receiver "textile-lab"
-                                         :resourceQuantityHasNumericalValue 10
-                                         :resourceQuantityHasUnit "kilo"}
-                                        {:action "work"
-                                         :economicEventId "sew-jeans"
-                                         :provider nil
-                                         :receiver "textile-lab"
-                                         :resourceQuantityHasNumericalValue 8
-                                         :resourceQuantityHasUnit "hour"}]
-                                       ;; TODO: resource or event or both
-                                       #_{:action :transfer
-                                          ;; TODO:add hasPointInTime
-                                          :provider nil
-                                          :reveiver "textile-lab"
-                                          :resourceQuantityAsNumericalValue 10
-                                          :resourceQuantityAsUnit :kilo}]))))
-;; => false
+                                   => {:name "Slim fit Jeans"
+                                       :resourceQuantityHasNumericalValue 1
+                                       :resourceQuantityHasUnit "each"
+                                       :resourceId "Slim fit Jeans"
+                                       :associatedEvent  {:action "produce"
+                                                          :resourceInventoriedAs "Slim fit Jeans"
+                                                          :provider nil
+                                                          :receiver "textile-lab"
+                                                          :resourceQuantityHasNumericalValue 1
+                                                          :resourceQuantityHasUnit "each"
+                                                          :economicEventId "produce-jeans"
+                                                          :outputOf  {:name "Produce jeans using raw material"
+                                                                      :processId "produce-jeans-process"
+                                                                      :inputs [{:action "consume"
+                                                                                :economicEventId "consume-some-raw-material"
+                                                                                :provider nil
+                                                                                :receiver "textile-lab"
+                                                                                :resourceQuantityHasNumericalValue 10
+                                                                                :resourceQuantityHasUnit "kilo"
+                                                                                :resourceInventoriedAs "Lot 173 textile material"
+                                                                                :associatedResource {:name  "Lot 173 textile material"
+                                                                                                     :resourceQuantityHasNumericalValue 180
+                                                                                                     :resourceQuantityHasUnit "kilo"
+                                                                                                     :resourceId  "Lot 173 textile material"
+                                                                                                     :associatedEvent {:action "transfer"
+                                                                                                                       :economicEventId "raw-material-transfer"
+                                                                                                                       :provider nil
+                                                                                                                       :receiver "textile-lab"
+                                                                                                                       :resourceQuantityHasNumericalValue 200
+                                                                                                                       :resourceQuantityHasUnit "kilo"
+                                                                                                                       :outputOf nil
+                                                                                                                       :resourceInventoriedAs "Red cotton textile"
+                                                                                                                       :toResourceInventoriedAs "Lot 173 textile material"
+                                                                                                                       :associatedResource {:name "Red cotton textile"
+                                                                                                                                            :resourceId "Red cotton textile"
+                                                                                                                                            :resourceQuantityHasNumericalValue -200
+                                                                                                                                            :resourceQuantityHasUnit "kilo"
+                                                                                                                                            :outputOf nil
+                                                                                                                                            :associatedEvent nil
+                                                                                                                                            }
+                                                                                                                       }
+                                                                                                     }
+                                                                                }
+                                                                               {:action "consume"
+                                                                                :economicEventId "consume-some-raw-material-2"
+                                                                                :provider nil
+                                                                                :receiver "textile-lab"
+                                                                                :resourceQuantityHasNumericalValue 10
+                                                                                :resourceQuantityHasUnit "kilo"
+                                                                                :associatedResource {:name  "Lot 173 textile material"
+                                                                                                     :resourceQuantityHasNumericalValue 180
+                                                                                                     :resourceQuantityHasUnit "kilo"
+                                                                                                     :resourceId  "Lot 173 textile material"
+                                                                                                     :associatedEvent {:action "transfer"
+                                                                                                                       :economicEventId "raw-material-transfer"
+                                                                                                                       :provider nil
+                                                                                                                       :receiver "textile-lab"
+                                                                                                                       :resourceQuantityHasNumericalValue 200
+                                                                                                                       :resourceQuantityHasUnit "kilo"
+                                                                                                                       :outputOf nil
+                                                                                                                       :resourceInventoriedAs "Red cotton textile"
+                                                                                                                       :toResourceInventoriedAs "Lot 173 textile material"
+                                                                                                                       :associatedResource {:name "Red cotton textile"
+                                                                                                                                            :resourceId "Red cotton textile"
+                                                                                                                                            :resourceQuantityHasNumericalValue -200
+                                                                                                                                            :resourceQuantityHasUnit "kilo"
+                                                                                                                                            :outputOf nil
+                                                                                                                                            :associatedEvent nil
+                                                                                                                                            }
+                                                                                                                       }
+                                                                                                     }
+                                                                                }
+                                                                               {:action "work"
+                                                                                :economicEventId "sew-jeans"
+                                                                                :provider nil
+                                                                                :receiver "textile-lab"
+                                                                                :resourceQuantityHasNumericalValue 8
+                                                                                :resourceQuantityHasUnit "hour"
+                                                                                :outputOf nil
+                                                                                :associatedResource nil
+                                                                                }]
+                                                                      }}
+
+                                       }
+                                   ))))

@@ -166,62 +166,61 @@
   [process-id]
   "Only one step back"
   (let [inputs (:inputs (query-process {:processId process-id}))]
-    (mapv #(select-keys % [:action :economicEventId :provider :resourceQuantityHasNumericalValue :resourceQuantityHasUnit :receiver]) inputs)))
+    (mapv #(select-keys
+            % [:action :economicEventId :provider :resourceQuantityHasNumericalValue :resourceQuantityHasUnit :receiver]
+            ) inputs)))
 
 ;; TODO: check if always enough
 (defn traceback-economic-resource
   [resource-name]
   "Only one step back"
   (let [resource (store/query (:transaction-store stores) {:resourceInventoriedAs resource-name})
-        toResource (store/query (:transaction-store stores) {:toResourceInventoriedAs resource-name})
-        resources (distinct (into resource toResource))
+        outputs-of (filter #(not-nil? (:outputOf %))  resource)
+        transfer-resources (filter #(= (:action %) "transfer") resource)
         ]
-    (mapv #(select-keys % [:action 
-                           :economicEventId 
-                           :provider
-                           :receiver
-                           :resourceQuantityHasNumericalValue
-                           :resourceQuantityHasUnit
-                           ]) resources
-          #_(dissoc (query-economic-event {:resourceInventoriedAs resource-name})
-            :hasPointInTime
-            :inputOf
-            :outputOf
-            :note
-            :currentLocation
-            :satisfies 
-            :toResourceInventoriedAs
-            :resourceClassifiedAs
-            :resourceInventoriedAs))
+    (if (empty? transfer-resources)
+      (mapv #(assoc (select-keys % [:action 
+                             :economicEventId 
+                             :provider
+                             :receiver
+                             :resourceQuantityHasNumericalValue
+                             :resourceQuantityHasUnit
+                                    ]) :next :process) outputs-of)
 
-    ))
+      (let [new-event (store/query (:transaction-store stores) {:toResourceInventoriedAs (first transfer-resources)})]
+        (log/spy "test")
+        (clojure.pprint/pprint transfer-resources)
+        (clojure.pprint/pprint new-event)
+        (if (empty? new-event)
+        nil
+        (mapv #(select-keys % [:action 
+                               :economicEventId 
+                               :provider
+                               :receiver
+                               :resourceQuantityHasNumericalValue
+                               :resourceQuantityHasUnit
+                               ]) new-event))
+
+        )
+
+      ))
+    )
 
 (defn traceback-economic-event
   [economic-event-id]
   "One level traceback"
-  (let [economic-event (query-economic-event {:economicEventId economic-event-id})]
-    (if (some? (:outputOf economic-event))
-      ;; this is a process
-      
-      (select-keys (:outputOf economic-event)
-                   [:name :processId])
-      ;; this is a resource
-      (if (some? (:inputOf economic-event))
-        (select-keys (query-resource {:name (:resourceInventoriedAs economic-event)})
-                     [:name 
-                      :resourceQuantityHasNumericalValue
-                      :resourceQuantityHasUnit
-                      :resourceId]
-                     )
-        ;; this is a resource
-        (if (= (:action economic-event) "transfer")
-          (select-keys (query-resource {:name (:resourceInventoriedAs economic-event)})
-                       [:name 
-                        :resourceQuantityHasNumericalValue
-                        :resourceQuantityHasUnit
-                        :resourceId]
-                       )
-          nil)))))
+  (let [economic-event  (query-economic-event {:economicEventId economic-event-id})]
+    (cond
+      (some? (:outputOf economic-event)) (select-keys (:outputOf economic-event)
+                                                      [:name :processId])
+
+      :else (select-keys (query-resource {:name (:resourceInventoriedAs economic-event)})
+                         [:name 
+                          :resourceQuantityHasNumericalValue
+                          :resourceQuantityHasUnit
+                          :resourceId])
+      )
+    ))
 
 (defn trace-resource
   [resource-name]
@@ -233,13 +232,26 @@
             result (atom nil)]
         (when leaf
           (cond
-            (not-nil? (:processId leaf)) (reset! result (mapv #(traceback-process (:processId %)) leaf) )
+            ;; add a special case to handle transfer economic-event
+
+            ;; WIP
+            (and (vector? leaf) (= "transfer" (:action (first leaf)))) (reset! result  (first (flatten (mapv #(traceback-economic-resource (:resourceId %)) leaf))))
+
+
+            (not-nil? (:processId leaf)) (reset! result (traceback-process (:processId leaf)))
             (not-nil? (:economicEventId leaf)) (reset! result (traceback-economic-event (:economicEventId leaf)))
             (not-nil? (:resourceId leaf)) (reset! result (traceback-economic-resource (:name leaf)))
-            (some? leaf) (reset! result (mapv #(traceback-economic-event (:economicEventId %)) leaf))
+            (= [nil] leaf) nil
+            (and (vector? leaf) (some? (:economicEventId (first leaf)))) (reset! result (into [] (set (mapv #(traceback-economic-event (:economicEventId %)) (filter #(not= "work" (:action %)) leaf)))))
+            (and (vector? leaf) (some? (:resourceId (first leaf)))) (reset! result  (first (flatten (mapv #(traceback-economic-resource (:resourceId %)) leaf))))
             :else nil)
-          (if @result 
-            (recur (conj trace-tree @result))
+          (if @result
+            (recur (conj trace-tree
+                         (if (contains? (first @result) :processId )
+                           (first  @result)
+                           (log/spy @result)
+                           )
+                         ))
             trace-tree))))))
 
 
