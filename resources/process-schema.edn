@@ -2,20 +2,21 @@
 :input-objects {
                 :EconomicEventCreateParams {
                                             :fields {
-                                                    :currentLocation {:type String}
-                                                    :note {:type String}
-                                                    :hasPointInTime {:type String}
-                                                    :provider {:type Int}
-                                                    :receiver {:type Int}
-                                                    :action {:type String}
-                                                    :inputOf {:type String}
-                                                    :outputOf {:type String}
-                                                    :economicEventId {:type String}
-                                                    :resourceQuantityHasNumericalValue {:type Float}
-                                                    :resourceQuantityHasUnit {:type String}
-                                                    :resourceInventoriedAs {:type String}
-                                                    :toResourceInventoriedAs {:type String}
-                                                    :resourceConformsTo {:type Int}}}
+                                                     :currentLocation {:type String}
+                                                     :note {:type String}
+                                                     :hasPointInTime {:type String}
+                                                     :provider {:type Int}
+                                                     :receiver {:type Int}
+                                                     :action {:type String}
+                                                     :inputOf {:type String}
+                                                     :resourceDescription {:type String} ;; Check VF dictionary for the exact name
+                                                     :outputOf {:type String}
+                                                     :economicEventId {:type String}
+                                                     :resourceQuantityHasNumericalValue {:type Float}
+                                                     :resourceQuantityHasUnit {:type String}
+                                                     :resourceInventoriedAs {:type String}
+                                                     :toResourceInventoriedAs {:type String}
+                                                     :resourceConformsTo {:type String}}}
                 :ProcessCreateParams {
                                       :fields {
                                                :name {:type String}
@@ -65,10 +66,11 @@
            :EconomicResource {:description "References one or more concepts in a common taxonomy or other classification scheme for purposes of categorization or grouping."
                               :fields {
                                        :name {:type String}
+                                       :note {:type String}
                                        :resourceQuantityHasNumericalValue {:type Float}
                                        :resourceQuantityHasUnit {:type String}
                                        :currentLocation {:type String}
-                                       :conformsTo {:type ResourceSpecification}}}
+                                       :conformsTo {:type String}}}
            :EconomicEvent {:description "Relates an economic event to a verb, such as consume, produce, work, improve, etc."
                            :fields {
                                     :note {:type String}
@@ -83,9 +85,10 @@
                                     :resourceQuantityHasNumericalValue {:type Float}
                                     :resourceQuantityHasUnit {:type String}
                                     :resourceInventoriedAs {:type EconomicResource}
+                                    :resourceDescription {:type String}
                                     ;; :satisfies {:type Intent}
                                     :toResourceInventoriedAs {:type EconomicResource}
-                                    :resourceClassifiedAs {:type ResourceSpecification}}}
+                                    :resourceConformsTo {:type String}}}
            }
  :queries {
            :economicEvent {:type :EconomicEvent
