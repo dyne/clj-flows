@@ -80,7 +80,7 @@
                                                              :resourceClassifiedAs [:red :cotton]})
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
                                      :resourceQuantityHasNumericalValue
-                                     ) => 300
+                                     ) => 300.0
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
                                      :currentLocation) => "52.372807,4.8981023"
                                  (-> (q/query-economic-event {:economicEventId "test-1"})
@@ -113,9 +113,9 @@
                                      :toResourceInventoriedAs) => "Raw red cotton"
                                  (-> (q/query-resource {:name "Raw red cotton"})
                                      :resourceQuantityHasNumericalValue
-                                     ) => 15
+                                     ) => 15.0
                                  (-> (q/query-resource {:name "Lot 173 textile material"})
-                                     :resourceQuantityHasNumericalValue) => 285)
+                                     :resourceQuantityHasNumericalValue) => 285.0)
 
                            (fact "Textile Lab creates a new process to produce a new pair of jeans"
                                  (mut/create-process "Create a new pair of hyper jeans"

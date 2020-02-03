@@ -26,6 +26,7 @@
             [clojure.walk :refer [postwalk]]))
 
 (def not-nil? (complement nil?))
+(def not-empty? (complement empty?))
 
 (defn query-process
   "This will return all processes if no arguments or will fetch on process by id"
@@ -56,10 +57,87 @@
                 :outputs outputs
                 ))))))
 
+(defn query-resource
+  [{:keys [name]}]
+  "This function returns information of a given resource if it exists and nil otherwise"
+  (when name
+    (let [produced-resources-amount (-> (store/aggregate (:transaction-store stores) [{"$match" {:resourceInventoriedAs name :action "produce"}}
+                                                                                      {"$group" {:_id "$provider"
+                                                                                                 :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
+                                        first
+                                        :resourceQuantityHasNumericalValue
+                                        (#(if (= nil %)
+                                            0
+                                            (float %)))
+                                        )
+          consumed-resources-amount (-> (store/aggregate (:transaction-store stores) [{"$match" {:resourceInventoriedAs name :action "consume"}}
+                                                                                {"$group" {:_id "$provider"
+                                                                                           :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
+                                        first
+                                        :resourceQuantityHasNumericalValue
+                                        (#(if (= nil %)
+                                            0
+                                            (float %)))
+                                        )
+          transferred-to-resources-amount (-> (store/aggregate (:transaction-store stores) [{"$match" {:toResourceInventoriedAs name :action "transfer"}}
+                                                                                     {"$group" {:_id "$provider"
+                                                                                                :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
+                                              first
+                                              :resourceQuantityHasNumericalValue
+                                              (#(if (= nil %)
+                                                  0
+                                                  (float %)))
+                                              )
+          transferred-from-resources-amount (-> (store/aggregate (:transaction-store stores) [{"$match" {:resourceInventoriedAs name :action "transfer"}}
+                                                                                       {"$group" {:_id "$provider"
+                                                                                                  :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
+                                                first
+                                                :resourceQuantityHasNumericalValue
+                                                (#(if (= nil %)
+                                                    0
+                                                    (float %)))
+                                                )
+          ]
+      (when-not
+          (and (= 0 produced-resources-amount)
+               (= 0 transferred-from-resources-amount)
+               (= 0 transferred-to-resources-amount))
+        {:resourceQuantityHasNumericalValue (+ (- transferred-from-resources-amount)
+                                               (- consumed-resources-amount)
+                                               produced-resources-amount
+                                               transferred-to-resources-amount
+                                             )
+         :resourceQuantityHasUnit (if (or (not= 0 produced-resources-amount) (not= 0 transferred-from-resources-amount))
+           (-> (store/query (:transaction-store stores) {:resourceInventoriedAs name})
+               first
+               :resourceQuantityHasUnit)
+           (-> (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
+               first
+               :resourceQuantityHasUnit)
+           )
+         :name name
+         :resourceId name
+         :currentLocation (if (not= 0 produced-resources-amount)
+                            (-> (store/query (:transaction-store stores) {:resourceInventoriedAs name :action "produce"})
+                                first
+                                :currentLocation
+                                )
+                            (-> (store/query (:transaction-store stores) {:toResourceInventoriedAs name :action "transfer"})
+                                first
+                                :currentLocation
+                                )
+                            )
+
+         }
+        )
+      )))
+
 (defn query-economic-event
   "This will return all eonomic events if no parameters are passed or will filter economic events by some criteria"
   ([]
    (let [allEvents (map #(assoc %
+                                :resourceInventoriedAs (query-resource {:name (:resourceInventoriedAs %)})
+                                :toResourceInventoriedAs (query-resource {:name (:toResourceInventoriedAs %)})
                                 :inputOf (query-process {:processId (:inputOf %)})
                                 :outputOf (query-process {:processId (:outputOf %)})
                                 ) (store/query (:transaction-store stores) {}))
@@ -83,54 +161,7 @@
   )
 
 
-;; Get-all-resources []
-;; [{:name :quantity :location :unit :tags(conforms-to)}]
 
-(defn query-resource
-  [{:keys [name]}]
-  "This function returns information of a given resource if it exists and nil otherwise"
-  (when name
-    (let [resource (store/query (:transaction-store stores) {:resourceInventoriedAs name})
-          toResource (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
-          transferred (store/aggregate (:transaction-store stores) [{"$match" {:toResourceInventoriedAs name}}
-                                                                 {"$group" {:_id "$receiver"
-                                                                            :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
-          provided (store/aggregate (:transaction-store stores) [{"$match" {:resourceInventoriedAs name}}
-                                                                 {"$group" {:_id "$provider"
-                                                                            :resourceQuantityHasNumericalValue {"$sum" "$resourceQuantityHasNumericalValue"}}}])
-          resources (distinct (into resource toResource))
-          ]
-      (when-not (empty? resources)
-        {:resourceQuantityHasNumericalValue  (if (some #(= (:action %) "transfer") resources)
-                                               (- (if (empty? transferred)
-                                                    0
-                                                    (int (:resourceQuantityHasNumericalValue (first transferred)))
-                                                    )
-                                                  (if (empty? provided)
-                                                    0
-                                                    (int (:resourceQuantityHasNumericalValue (first provided)))
-                                                    ))
-                                               (- (if (empty? provided)
-                                                    0
-                                                    (int (:resourceQuantityHasNumericalValue (first provided)))
-                                                    )
-                                                  (if (empty? transferred)
-                                                    0
-                                                    (int (:resourceQuantityHasNumericalValue (first transferred)))
-                                                    ))
-                                               )
-
-         
-         :resourceQuantityHasUnit (-> resource
-                                      last
-                                      :resourceQuantityHasUnit)
-         :name name
-         :resourceId name
-         :currentLocation (-> resource
-                              last
-                              :currentLocation)}
-        )
-      )))
 
 (defn list-all-resources []
   (let [economic-events (store/query (:transaction-store stores) {})
@@ -143,7 +174,6 @@
          (remove nil?)
          (map #(query-resource {:name %}))
          (remove nil?))
-    
     #_(remove nil? (set (apply concat (mapv #(vals (select-keys % [:toResourceInventoriedAs :resourceInventoriedAs])) (concat resourceInventoriedAs toResourceInventoriedAs)))))))
 
 (defn query-intent

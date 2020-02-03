@@ -54,7 +54,10 @@
                                               ]
                                           resource
                                           ))
-   :query/query-all-resources (fn [_ _ _] (let []))
+   :query/query-all-resources (fn [_ _ _] (let [allResources
+                                                (q/list-all-resources)]
+                                            allResources
+                                            ))
 
 
    :mutation/create-process (fn [_ args _] (let [{:keys [name processId before note]} (:process args)
@@ -64,13 +67,14 @@
                                                  ]
                                              (m/create-process name params)
                                              ))
-   :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs toResourceInventoriedAs resourceConformsTo economicEventId]} (:event args)
+   :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs toResourceInventoriedAs resourceConformsTo economicEventId currentLocation]} (:event args)
                                                         params {:note note
                                                                 :economicEventId economicEventId
                                                                 :hasPointInTime hasPointInTime
                                                                 :provider provider
                                                                 :receiver receiver
                                                                 :inputOf inputOf
+                                                                :currentLocation currentLocation
                                                                 :outputOf outputOf
                                                                 :toResourceInventoriedAs toResourceInventoriedAs
                                                                 :resourceInventoriedAs resourceInventoriedAs

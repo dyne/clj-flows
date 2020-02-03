@@ -2,6 +2,7 @@
 :input-objects {
                 :EconomicEventCreateParams {
                                             :fields {
+                                                    :currentLocation {:type String}
                                                     :note {:type String}
                                                     :hasPointInTime {:type String}
                                                     :provider {:type Int}
@@ -79,8 +80,8 @@
                                     :outputOf {:type Process}
                                     :economicEventId {:type String}
                                     :currentLocation {:type String}
-                                    :resourceQuantityHasNumericValue {:type Float}
-                                    :resourcequantityHasUnit {:type String}
+                                    :resourceQuantityHasNumericalValue {:type Float}
+                                    :resourceQuantityHasUnit {:type String}
                                     :resourceInventoriedAs {:type EconomicResource}
                                     ;; :satisfies {:type Intent}
                                     :toResourceInventoriedAs {:type EconomicResource}
@@ -101,7 +102,7 @@
                               :args {:name {:type String}}
                               :resolve :query/query-resource
                               }
-           :allEconomicResource {:type (list :EconomicResource)
+           :allEconomicResources {:type (list :EconomicResource)
                                  :description "return all resources"
                                  :args {}
                                  :resolve :query/query-all-resources
