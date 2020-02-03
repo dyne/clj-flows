@@ -97,38 +97,36 @@
                                                     0
                                                     (float %)))
                                                 )
+
+          additional-info
+          (if (not= 0 produced-resources-amount)
+            (first (map #(hash-map :resourceQuantityHasUnit (:resourceQuantityHasUnit %)
+                                   :note (:resourceDescription %)
+                                   :currentLocation (:currentLocation %)
+                                   :conformsTo (:resourceConformsTo %)
+                                   ) (store/query (:transaction-store stores) {:resourceInventoriedAs name :action "produce"})
+                        ))
+            (first (map #(hash-map :resourceQuantityHasUnit (:resourceQuantityHasUnit %)
+                                   :note (:resourceDescription %)
+                                   :currentLocation (:currentLocation %)
+                                   :conformsTo (:resourceConformsTo %)
+                                   ) (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
+                        )
+                   )
+            )
           ]
       (when-not
           (and (= 0 produced-resources-amount)
                (= 0 transferred-from-resources-amount)
                (= 0 transferred-to-resources-amount))
-        {:resourceQuantityHasNumericalValue (+ (- transferred-from-resources-amount)
+        (merge additional-info {:resourceQuantityHasNumericalValue (+ (- transferred-from-resources-amount)
                                                (- consumed-resources-amount)
                                                produced-resources-amount
                                                transferred-to-resources-amount
                                              )
-         :resourceQuantityHasUnit (if (or (not= 0 produced-resources-amount) (not= 0 transferred-from-resources-amount))
-           (-> (store/query (:transaction-store stores) {:resourceInventoriedAs name})
-               first
-               :resourceQuantityHasUnit)
-           (-> (store/query (:transaction-store stores) {:toResourceInventoriedAs name})
-               first
-               :resourceQuantityHasUnit)
-           )
          :name name
          :resourceId name
-         :currentLocation (if (not= 0 produced-resources-amount)
-                            (-> (store/query (:transaction-store stores) {:resourceInventoriedAs name :action "produce"})
-                                first
-                                :currentLocation
-                                )
-                            (-> (store/query (:transaction-store stores) {:toResourceInventoriedAs name :action "transfer"})
-                                first
-                                :currentLocation
-                                )
-                            )
-
-         }
+         })
         )
       )))
 

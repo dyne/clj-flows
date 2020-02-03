@@ -29,6 +29,8 @@
 (defn create-economic-event
   [action resource-quantity-has-numerical-value resource-quantity-has-unit params]
   (let [
+        resourceConformsTo (or (:resourceConformsTo params) nil)
+        resourceDescription (or (:resourceDescription params) nil)
         provider (or (:provider params) nil)
         receiver (or (:receiver params) nil)
         has-point-in-time (if-let [has-point-in-time (:hasPointInTime params)] has-point-in-time (format "MM/dd" (local-date)))
@@ -45,6 +47,7 @@
         economic-event {:_id (str has-point-in-time "-"  (fxc.core/generate 32))
                         :economicEventId economic-event-id
                         :note note
+                        :resourceDescription resourceDescription
                         :hasPointInTime has-point-in-time
                         :provider provider
                         :receiver receiver
@@ -58,7 +61,7 @@
                         :satisfies satisfies
                         :resourceInventoriedAs resource-inventoried-as
                         :toResourceInventoriedAs to-resource-inventoried-as
-
+                        :resourceConformsTo resourceConformsTo
                         }
         ]
     (storage/store! (:transaction-store stores) :_id economic-event)

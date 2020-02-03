@@ -68,18 +68,22 @@
                                                              :currentLocation "52.372807,4.8981023"
                                                              :outputOf "produce-jeans-process"}))
                            (fact "Test list-all-resources"
-                                 (q/list-all-resources) => '({:currentLocation nil
+                                 (q/list-all-resources) => '({
                                                               :name "Red cotton textile"
                                                               :resourceId "Red cotton textile"
-                                                              :resourceQuantityHasNumericalValue -200.0
-                                                              :resourceQuantityHasUnit "kilo"}
-                                                             {:currentLocation "52.372807,4.8981023"
+                                                              :resourceQuantityHasNumericalValue -200.
+                                                              }
+                                                             {:conformsTo nil
+                                                              :currentLocation "52.372807,4.8981023"
                                                               :name "Slim fit Jeans"
+                                                              :note nil
                                                               :resourceId "Slim fit Jeans"
                                                               :resourceQuantityHasNumericalValue 1.0
                                                               :resourceQuantityHasUnit "each"}
-                                                             {:currentLocation "52.372807,4.8981023"
+                                                             {:conformsTo nil
+                                                              :currentLocation "52.372807,4.8981023"
                                                               :name "Lot 173 textile material"
+                                                              :note nil
                                                               :resourceId "Lot 173 textile material"
                                                               :resourceQuantityHasNumericalValue 180.0
                                                               :resourceQuantityHasUnit "kilo"}))
@@ -97,11 +101,8 @@
                                    (count (:outputs process-for-event)) => 1))
 
                            (fact "test query resource"
-                                 (q/query-resource {:name "Red cotton textile"}) => {:currentLocation nil
-                                                                                     :name "Red cotton textile"
-                                                                                     :resourceId "Red cotton textile"
-                                                                                     :resourceQuantityHasNumericalValue -200.0
-                                                                                     :resourceQuantityHasUnit "kilo"}
+                                 (q/query-resource {:name "Red cotton textile"}) => {                                                                                :name "Red cotton textile"                                                      :resourceId "Red cotton textile"                                                :resourceQuantityHasNumericalValue -200.0                                                                                     }
+
 
                                  )
 

@@ -67,7 +67,7 @@
                                                  ]
                                              (m/create-process name params)
                                              ))
-   :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs toResourceInventoriedAs resourceConformsTo economicEventId currentLocation]} (:event args)
+   :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs toResourceInventoriedAs resourceConformsTo economicEventId resourceDescription currentLocation]} (:event args)
                                                         params {:note note
                                                                 :economicEventId economicEventId
                                                                 :hasPointInTime hasPointInTime
@@ -78,6 +78,7 @@
                                                                 :outputOf outputOf
                                                                 :toResourceInventoriedAs toResourceInventoriedAs
                                                                 :resourceInventoriedAs resourceInventoriedAs
+                                                                :resourceDescription resourceDescription
                                                                 :resourceConformsTo resourceConformsTo}
                                                         ]
                                                     (m/create-economic-event action resourceQuantityHasNumericalValue resourceQuantityHasUnit params)))
