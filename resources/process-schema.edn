@@ -1,5 +1,19 @@
 {
-:input-objects {
+ :input-objects {
+                 :IntentCreateParams {:fields {:intentId {:type String}
+                                               :provider {:type String}
+                                               :receiver {:type String}
+                                               :hasPointInTime {:type String}
+                                               :action {:type String}
+                                               :availableQuantityHasNumericalValue {:type Float}
+                                               :availableQuantityHasUnit {:type String}
+                                               :description {:type String}
+                                               :atLocation {:type String}
+                                               ;; :resourceClassified-as resource-classified-as
+                                               :resourceConformsTo {:type String}
+
+                                               }
+                                      }
                 :EconomicEventCreateParams {
                                             :fields {
                                                      :currentLocation {:type String}
@@ -50,19 +64,19 @@
                               :outputs {:type (list :EconomicEvent)}
                               }
                      }
-           ;; :Intent {
-           ;;         :description   "An informal or formal textual identifier for an item. Does not imply uniqueness."
-           ;;         :fields {:id {:type Int}
-           ;;                  :provider {:type String}
-           ;;                  :receiver {:type String}
-           ;;                  :action {:type String}
-           ;;                  :available-quantity-has-numeric-value {:type Float}
-           ;;                  :available-quantity-has-unit {:type Unit}
-           ;;                  :description {:type String}
-           ;;                  :at-location {:type String}
-           ;;                  :resource-classified-as {:type ResourceSpecification}
-           ;;                  :resource-conforms-to {:type String}}
-           ;;         }
+            :Intent {
+                    :description   "An informal or formal textual identifier for an item. Does not imply uniqueness."
+                    :fields {:intentId {:type String}
+                             :provider {:type String}
+                             :receiver {:type String}
+                             :action {:type String}
+                             :availableQuantityHasNumericalValue {:type Float}
+                             :availableQuantityHasUnit {:type Unit}
+                             :description {:type String}
+                             :atLocation {:type String}
+                             ;; :resourceClassifiedAs {:type ResourceSpecification}
+                             :resourceConformsTo {:type String}}
+                    }
            :EconomicResource {:description "References one or more concepts in a common taxonomy or other classification scheme for purposes of categorization or grouping."
                               :fields {
                                        :name {:type String}
@@ -120,8 +134,16 @@
                           :args {}
                           :resolve :query/query-all-processes
                           }
-           ;; :intent {}
-           ;; :allIntents {}
+           :intent {:type :Intent
+                    :description "Return the intent specified by its ID if it exists"
+                    :args {:id {:type ID}}
+                    :resolve :query/query-intent
+                    }
+           :allIntents {:type (list :Intent)
+                        :description "Return all intents"
+                        :args {}
+                        :resolve :query/query-all-intents
+                        }
            }
  :mutations {
              :createEconomicEvent {
@@ -130,7 +152,11 @@
                                    :args {:event {:type :EconomicEventCreateParams}}
                                    :resolve :mutation/create-economic-event
                                    }
-             ;; :createIntent {}
+             :createIntent {:type :Intent
+                            :description "Create a new intent"
+                            :args {:intent {:type :IntentCreateParams}}
+                            :resolve :mutation/create-intent
+                            }
              :createProcess {
                              :type :Process
                              :description "Create a new process"

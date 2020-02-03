@@ -59,7 +59,15 @@
                                             allResources
                                             ))
 
+   :query/query-intent (fn [_ args _] (let [{:keys [id]} args
+                                            intent (q/query-intent {:intentId id})
+                                            ]
+                                        intent
+                                        ))
 
+   :query/query-all-intents (fn [_ _ _] (let [allIntents (q/list-all-intents)]
+                                          allIntents
+                                          ))
    :mutation/create-process (fn [_ args _] (let [{:keys [name processId before note]} (:process args)
                                                  params {:note note
                                                          :before before
@@ -67,6 +75,26 @@
                                                  ]
                                              (m/create-process name params)
                                              ))
+   :mutation/create-intent (fn [_ args _] (let [{:keys [intentId
+                                                        provider
+                                                        receiver
+                                                        hasPointInTime
+                                                        action
+                                                        availableQuantityHasNumericalValue
+                                                        availableQuantityHasUnit
+                                                        description
+                                                        atLocation
+                                                        ;; :resourceClassified-as resource-classified-as
+                                                        resourceConformsTo
+                                                        ]} (:intent args)
+                                                params {:provider provider
+                                                        :receiver receiver
+                                                        :intentId intentId
+                                                        :atLocation atLocation
+                                                        :resourceConformsTo resourceConformsTo}
+                                                ]
+                                            (m/create-intent action availableQuantityHasNumericalValue availableQuantityHasUnit description params)
+                                            ))
    :mutation/create-economic-event (fn [_ args _] (let [{:keys [action resourceQuantityHasNumericalValue resourceQuantityHasUnit note hasPointInTime provider receiver inputOf outputOf resourceInventoriedAs toResourceInventoriedAs resourceConformsTo economicEventId resourceDescription currentLocation]} (:event args)
                                                         params {:note note
                                                                 :economicEventId economicEventId

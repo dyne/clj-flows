@@ -104,7 +104,7 @@
                                    :note (:resourceDescription %)
                                    :currentLocation (:currentLocation %)
                                    :conformsTo (:resourceConformsTo %)
-                                   ) (store/query (:transaction-store stores) {:resourceInventoriedAs name :action "produce"})
+                                   ) (store/query (:transaction-store stores) {:resourceInventoriedAs name})
                         ))
             (first (map #(hash-map :resourceQuantityHasUnit (:resourceQuantityHasUnit %)
                                    :note (:resourceDescription %)
@@ -115,6 +115,7 @@
                    )
             )
           ]
+
       (when-not
           (and (= 0 produced-resources-amount)
                (= 0 transferred-from-resources-amount)
@@ -175,10 +176,18 @@
     #_(remove nil? (set (apply concat (mapv #(vals (select-keys % [:toResourceInventoriedAs :resourceInventoriedAs])) (concat resourceInventoriedAs toResourceInventoriedAs)))))))
 
 (defn query-intent
-  [{:keys [provider]}]
+  [{:keys [id]}]
   "Returns a list of intents, currently searching only by provider"
-  (let [intents (store/query (:intent-store stores) {:provider provider})]
-    intents))
+  (let [intents (store/query (:intent-store stores) {:intentId id})]
+    (-> intents
+        first)))
+
+
+(defn list-all-intents []
+  (let [intents (store/query (:intent-store stores) {})]
+    intents
+    )
+  )
 
 (defn economic-event->process [economic-event-id]
   (let [economic-event (query-economic-event {:economicEventId economic-event-id})

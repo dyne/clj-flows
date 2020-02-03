@@ -48,7 +48,6 @@
                         :economicEventId economic-event-id
                         :note note
                         :resourceDescription resourceDescription
-                        :hasPointInTime has-point-in-time
                         :provider provider
                         :receiver receiver
                         :action action
@@ -69,28 +68,29 @@
   )
 
 
+
 (defn create-intent
-  [action available-quantity-has-numeric-value available-quantity-has-unit description params]
-  (let [has-point-in-time (if-let [has-point-in-time (:has-point-in-time params)] has-point-in-time (t/now))
+  [action availableQuantityHasNumericalValue availableQuantityHasUnit description params]
+  (let [hasPointInTime (if-let [hasPointInTime (:hasPointInTime params)] hasPointInTime (format "MM/dd" (local-date)))
         provider (or (:provider params) nil)
         receiver (or (:receiver params) nil)
-        intent-id (or (:intent-id params) (fxc.core/generate 32))
-        at-location (or (:at-location params) nil)
-        resource-classified-as (or (:resource-classified-as params) [])
-        resource-conforms-to (or (:resource-conforms-to params) [])
+        intentId (or (:intentId params) (fxc.core/generate 32))
+        atLocation (or (:atLocation params) nil)
+        ;; resourceClassifiedAs (or (:resource-classified-as params) [])
+        resourceConformsTo (or (:resourceConformsTo params) nil)
 
-        intent {:_id (str has-point-in-time "-" (or (:provider params) (:receiver params)))
-                :intent-id intent-id
+        intent {:_id (str hasPointInTime "-" (fxc.core/generate 32))
+                :intentId intentId
                 :provider provider
                 :receiver receiver
-                :has-point-in-time has-point-in-time
+                :hasPointInTime hasPointInTime
                 :action action
-                :available-quantity-has-numeric-value available-quantity-has-numeric-value
-                :available-quantity-has-unit available-quantity-has-unit
+                :availableQuantityHasNumericalValue availableQuantityHasNumericalValue
+                :availableQuantityHasUnit availableQuantityHasUnit
                 :description description
-                :at-location at-location
-                :resource-classified-as resource-classified-as
-                :resource-conforms-to resource-conforms-to
+                :atLocation atLocation
+                ;; :resourceClassified-as resource-classified-as
+                :resourceConformsTo resourceConformsTo
                 }]
     (storage/store! (:intent-store stores) :_id intent))
     )
